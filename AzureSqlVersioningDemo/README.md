@@ -10,7 +10,7 @@ The demo uses three API versions with a simple, incremental evolution:
 
 | Operation | V1 (`2021-11-01`) | V2 (`2025-08-01`) | V3 (`2025-08-01-preview`) |
 |---|---|---|---|
-| **Create** (PUT) | ✅ implemented | ← fallback to V1 | ← fallback to V1 |
+| **Create** (PUT) | ✅ implemented | ← fallback to V1 | ✅ reimplemented (new property) |
 | **Get** (GET `{name}`) | ✅ implemented | ← fallback to V1 | ✅ reimplemented (new property) |
 | **Delete** (DELETE) | ✅ implemented | ← fallback to V1 | ← fallback to V1 |
 | **List** (GET) | — | ✅ new | ← fallback to V2 |
@@ -20,7 +20,7 @@ The demo uses three API versions with a simple, incremental evolution:
 
 **V2 (2025-08-01):** Adds List and Update. Since Create, Get, and Delete are unchanged, they fall back to V1's controller automatically.
 
-**V3 (2025-08-01-preview):** Adds an `elasticPoolId` property to `DatabaseProperties`. This impacts Get and Update (their response shapes changed), so only those two are reimplemented. Create and Delete fall back to V1; List falls back to V2.
+**V3 (2025-08-01-preview):** Adds an `elasticPoolId` property to `DatabaseProperties`. This impacts Create, Get, and Update (their request/response shapes changed), so those three are reimplemented. Delete falls back to V1; List falls back to V2.
 
 ## Project Structure
 
@@ -37,7 +37,7 @@ AzureSqlVersioningDemo/
 │   ├── Controllers/DatabasesController.cs   # List, Update (new operations only)
 │   └── Models/Database.cs
 ├── V20250801Preview/                   # API version 2025-08-01-preview
-│   ├── Controllers/DatabasesController.cs   # Get, Update (impacted by new property)
+│   ├── Controllers/DatabasesController.cs   # Create, Get, Update (impacted by new property)
 │   └── Models/Database.cs                   # Adds ElasticPoolId
 ├── Program.cs
 └── README.md

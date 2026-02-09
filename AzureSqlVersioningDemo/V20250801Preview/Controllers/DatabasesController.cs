@@ -6,8 +6,8 @@ namespace AzureSqlVersioningDemo.V20250801Preview.Controllers;
 
 /// <summary>
 /// Database controller for API version 2025-08-01-preview.
-/// Only implements operations impacted by the new ElasticPoolId property: Get and Update.
-/// Create falls back to V20211101, Delete falls back to V20211101, List falls back to V20250801.
+/// Implements operations impacted by the new ElasticPoolId property: Create, Get, and Update.
+/// Delete falls back to V20211101, List falls back to V20250801.
 /// </summary>
 [ApiController]
 [ApiVersion("2025-08-01-preview")]
@@ -45,6 +45,31 @@ public class DatabasesController : ControllerBase
         });
     }
 
+    [HttpPut("{databaseName}")]
+    public ActionResult<DatabaseResource> CreateOrUpdate(
+        string subscriptionId, string resourceGroupName, string serverName, string databaseName,
+        [FromBody] DatabaseResource request)
+    {
+        _logger.LogInformation("PUT Database - served by V20250801Preview controller");
+
+        var previewProps = request.Properties as V20250801Preview.Models.DatabaseProperties;
+
+        return Ok(new DatabaseResource
+        {
+            Id = $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}",
+            Name = databaseName,
+            Type = "Microsoft.Sql/servers/databases",
+            Location = request.Location ?? "eastus",
+            Tags = request.Tags,
+            Properties = new V20250801Preview.Models.DatabaseProperties
+            {
+                Description = "Served by V20250801Preview controller",
+                Status = "Creating",
+                ElasticPoolId = previewProps?.ElasticPoolId
+            }
+        });
+    }
+
     [HttpPatch("{databaseName}")]
     public ActionResult<DatabaseResource> Update(
         string subscriptionId, string resourceGroupName, string serverName, string databaseName,
@@ -70,7 +95,6 @@ public class DatabasesController : ControllerBase
         });
     }
 
-    // Create (PUT) falls back to V20211101.
     // Delete (DELETE) falls back to V20211101.
     // List (GET) falls back to V20250801.
 }
