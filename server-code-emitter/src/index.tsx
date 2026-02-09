@@ -221,43 +221,47 @@ function extractSnapshot(ns: Namespace): VersionSnapshot {
 // ---------------------------------------------------------------------------
 
 function fingerprintOperation(op: Operation): string {
-  const params = fingerprintModel(op.parameters);
-  const returnType = fingerprintType(op.returnType);
+  const seen = new Set<Type>();
+  const params = fingerprintModel(op.parameters, seen);
+  const returnType = fingerprintType(op.returnType, seen);
   return `(${params}) => ${returnType}`;
 }
 
-function fingerprintModel(model: Model): string {
+function fingerprintModel(model: Model, seen: Set<Type> = new Set()): string {
+  if (seen.has(model)) return `<circular:${model.name || "anonymous"}>`;
+  seen.add(model);
   const props: string[] = [];
   for (const [name, prop] of model.properties) {
-    props.push(`${name}${prop.optional ? "?" : ""}: ${fingerprintType(prop.type)}`);
+    props.push(`${name}${prop.optional ? "?" : ""}: ${fingerprintType(prop.type, seen)}`);
   }
+  seen.delete(model);
   return `{ ${props.join(", ")} }`;
 }
 
-function fingerprintType(type: Type): string {
+function fingerprintType(type: Type, seen: Set<Type> = new Set()): string {
   switch (type.kind) {
     case "Scalar":
       return type.name;
     case "Model": {
       if (type.indexer && type.name === "Array") {
-        return `${fingerprintType(type.indexer.value)}[]`;
+        return `${fingerprintType(type.indexer.value, seen)}[]`;
       }
       if (type.name && type.name !== "" && !type.name.startsWith("(anonymous")) {
-        return `${type.name}${fingerprintModel(type)}`;
+        return `${type.name}${fingerprintModel(type, seen)}`;
       }
-      return fingerprintModel(type);
+      return fingerprintModel(type, seen);
     }
     case "Enum":
       return type.name;
     case "Union": {
       const variants: string[] = [];
       for (const [, v] of type.variants) {
-        variants.push(fingerprintType(v.type));
+        variants.push(fingerprintType(v.type, seen));
       }
       return variants.join(" | ");
     }
     case "Tuple": {
-      const elements = type.values.map((v) => fingerprintType(v));
+      const elements = type.values.map((v) => fingerprintType(v, seen));
       return `[${elements.join(", ")}]`;
     }
     default:

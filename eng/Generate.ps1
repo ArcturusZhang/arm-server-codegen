@@ -16,7 +16,7 @@ $ErrorActionPreference = "Stop"
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $emitterDir = Join-Path $repoRoot "server-code-emitter"
-$typespecDir = Join-Path $repoRoot "AzureSqlVersioningDemo" "typespec"
+$typespecDir = Join-Path $repoRoot "typespec"
 
 # Step 1: Rebuild the emitter
 if (-not $SkipEmitterBuild) {
