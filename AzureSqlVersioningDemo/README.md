@@ -1,28 +1,45 @@
 # Azure SQL Versioning Demo
 
-A standalone ASP.NET Core 10 project demonstrating how Azure SQL's API version routing mechanism works using the `Asp.Versioning.Mvc` package. It mimics the Azure Resource Manager (ARM) patterns including versioned controllers, version-specific response models, and long-running operations (LRO).
+A standalone ASP.NET Core 10 project demonstrating how Azure SQL's API version routing works using `Asp.Versioning.Mvc`. It shows how incremental versioning with a **fallback convention** lets you only implement the operations that changed in each version — unchanged operations are automatically served by the previous version's controller.
 
-Each version's controller sets a `description` field inside `properties` (e.g. `"Served by V20211101 controller"`) so you can verify which controller actually handled the request — especially useful for testing version fallback behavior.
+Each controller response includes a `description` field inside `properties` (e.g. `"Served by V20211101 controller"`) so you can verify exactly which controller handled the request.
+
+## Version Evolution
+
+The demo uses three API versions with a simple, incremental evolution:
+
+| Operation | V1 (`2021-11-01`) | V2 (`2025-08-01`) | V3 (`2025-08-01-preview`) |
+|---|---|---|---|
+| **Create** (PUT) | ✅ implemented | ← fallback to V1 | ← fallback to V1 |
+| **Get** (GET `{name}`) | ✅ implemented | ← fallback to V1 | ✅ reimplemented (new property) |
+| **Delete** (DELETE) | ✅ implemented | ← fallback to V1 | ← fallback to V1 |
+| **List** (GET) | — | ✅ new | ← fallback to V2 |
+| **Update** (PATCH) | — | ✅ new | ✅ reimplemented (new property) |
+
+**V1 (2021-11-01):** Introduces Create, Get, Delete — the baseline operations.
+
+**V2 (2025-08-01):** Adds List and Update. Since Create, Get, and Delete are unchanged, they fall back to V1's controller automatically.
+
+**V3 (2025-08-01-preview):** Adds an `elasticPoolId` property to `DatabaseProperties`. This impacts Get and Update (their response shapes changed), so only those two are reimplemented. Create and Delete fall back to V1; List falls back to V2.
 
 ## Project Structure
 
 ```
 AzureSqlVersioningDemo/
 ├── Common/
-│   └── Models/Database.cs              # Shared base types (DatabaseProperties, SkuInfo, AsyncOperationResult)
+│   └── Models/Database.cs              # Shared base (DatabaseProperties, DatabaseResource)
 ├── Infrastructure/
 │   └── VersionFallbackConvention.cs    # Azure SQL-style version fallback (IControllerConvention)
-├── V20211101/                          # API version 2021-11-01 (Legacy Stable)
-│   ├── Controllers/DatabasesController.cs
-│   └── Models/Database.cs              # Edition, ServiceObjective (legacy properties)
-├── V20250801/                          # API version 2025-08-01 (Current Stable)
-│   ├── Controllers/DatabasesController.cs
-│   └── Models/Database.cs              # SKU, ZoneRedundant, HighAvailabilityReplicaCount
+├── V20211101/                          # API version 2021-11-01
+│   ├── Controllers/DatabasesController.cs   # Create, Get, Delete
+│   └── Models/Database.cs
+├── V20250801/                          # API version 2025-08-01
+│   ├── Controllers/DatabasesController.cs   # List, Update (new operations only)
+│   └── Models/Database.cs
 ├── V20250801Preview/                   # API version 2025-08-01-preview
-│   ├── Controllers/DatabasesController.cs
-│   └── Models/Database.cs              # PreferredEnclaveType, UseFreeLimit (preview features)
-├── Program.cs                          # API versioning configuration
-├── AzureSqlVersioningDemo.http         # HTTP test file (VS Code REST Client / Visual Studio)
+│   ├── Controllers/DatabasesController.cs   # Get, Update (impacted by new property)
+│   └── Models/Database.cs                   # Adds ElasticPoolId
+├── Program.cs
 └── README.md
 ```
 
@@ -32,225 +49,136 @@ AzureSqlVersioningDemo/
 
 ## Getting Started
 
-### 1. Build the project
-
 ```bash
 cd AzureSqlVersioningDemo
 dotnet build
-```
-
-### 2. Run the project
-
-```bash
 dotnet run
 ```
 
-The server starts on `http://localhost:5188` by default.
+The server starts on `http://localhost:5188`.
 
-### 3. Test with curl
+## Testing Version Routing
 
-**Get a database using the legacy API version (2021-11-01):**
+### Direct routing — operation exists in requested version
 
 ```bash
+# Get (V1 — direct)
 curl "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/databases/mydb?api-version=2021-11-01"
 ```
-
-Response includes legacy properties (`edition`, `serviceObjective`) and the version routing indicator:
 ```json
 {
-  "id": "/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/databases/mydb",
-  "name": "mydb",
-  "type": "Microsoft.Sql/servers/databases",
-  "location": "eastus",
   "properties": {
     "description": "Served by V20211101 controller",
-    "edition": "Standard",
-    "serviceObjective": "S0",
+    "collation": "SQL_Latin1_General_CP1_CI_AS",
     "status": "Online"
   }
 }
 ```
 
-**Get a database using the current stable version (2025-08-01):**
+### Fallback routing — operation falls back to an earlier version
 
 ```bash
+# Get with V2 — V20250801 has no Get, falls back to V20211101
 curl "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/databases/mydb?api-version=2025-08-01"
 ```
-
-Response uses SKU model instead:
 ```json
 {
-  "id": "/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/databases/mydb",
-  "name": "mydb",
-  "type": "Microsoft.Sql/servers/databases",
-  "location": "eastus",
-  "sku": { "name": "S0", "tier": "Standard", "capacity": 10 },
+  "properties": {
+    "description": "Served by V20211101 controller",
+    "status": "Online"
+  }
+}
+```
+Note: The `description` confirms V20211101 handled the request even though V2 was requested.
+
+### New operations added in V2
+
+```bash
+# List (new in V2)
+curl "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/databases?api-version=2025-08-01"
+```
+```json
+[{
   "properties": {
     "description": "Served by V20250801 controller",
-    "zoneRedundant": "Disabled",
-    "highAvailabilityReplicaCount": 0,
     "status": "Online"
   }
-}
+}]
 ```
-
-**Get a database using the preview version (2025-08-01-preview):**
 
 ```bash
-curl "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/databases/mydb?api-version=2025-08-01-preview"
+# Update (new in V2)
+curl -X PATCH "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/databases/mydb?api-version=2025-08-01" \
+  -H "Content-Type: application/json" -d '{"properties":{"collation":"Latin1_General_100_CI_AS"}}'
 ```
-
-Response includes preview-only features:
 ```json
 {
-  "id": "/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/databases/mydb",
-  "name": "mydb",
-  "type": "Microsoft.Sql/servers/databases",
-  "location": "eastus",
-  "sku": { "name": "GP_S_Gen5_2", "tier": "GeneralPurpose", "family": "Gen5", "capacity": 2 },
   "properties": {
-    "description": "Served by V20250801Preview controller",
-    "preferredEnclaveType": "VBS",
-    "useFreeLimit": true,
+    "description": "Served by V20250801 controller",
+    "collation": "Latin1_General_100_CI_AS",
     "status": "Online"
   }
 }
 ```
 
-### 4. Test Version Fallback (Delete)
-
-V20250801 intentionally omits the `DELETE` action. The `VersionFallbackConvention` routes it to V20211101's implementation. You can verify this by checking the `description` field in the server logs — the V20211101 controller handles the request.
+### V3 reimplements impacted operations (new property)
 
 ```bash
-# DELETE with api-version=2025-08-01 is served by V20211101 controller (fallback)
-curl -i -X DELETE "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/databases/mydb?api-version=2025-08-01"
-
-# DELETE with api-version=2025-08-01-preview is served by V20250801Preview controller (direct)
-curl -i -X DELETE "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/databases/mydb?api-version=2025-08-01-preview"
+# Get with V3 — reimplemented, returns elasticPoolId
+curl "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/databases/mydb?api-version=2025-08-01-preview"
 ```
-
-### 5. Test Long-Running Operations (LRO)
-
-**Create a database (returns 202 Accepted):**
-
-```bash
-curl -i -X PUT "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/databases/newdb?api-version=2025-08-01" \
-  -H "Content-Type: application/json" \
-  -d '{"location":"eastus","sku":{"name":"S0","tier":"Standard"}}'
-```
-
-Response headers include polling URLs:
-```
-HTTP/1.1 202 Accepted
-Location: http://localhost:5188/.../operationResults/{operationId}
-Azure-AsyncOperation: http://localhost:5188/.../azureAsyncOperation/{operationId}
-Retry-After: 15
-```
-
-The response body includes `"description": "Served by V20250801 controller"` in properties.
-
-**Poll the operation status:**
-
-```bash
-# Check status only (Azure-AsyncOperation URL)
-curl "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/databases/newdb/azureAsyncOperation/{operationId}?api-version=2025-08-01"
-
-# Get completed resource (Location URL)
-curl "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/databases/newdb/operationResults/{operationId}?api-version=2025-08-01"
-```
-
-### 6. Test with the .http file
-
-Open `AzureSqlVersioningDemo.http` in Visual Studio or VS Code (with REST Client extension) to run pre-built requests for all versions.
-
-### 7. Request an unsupported version
-
-```bash
-curl "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/databases/mydb?api-version=2019-01-01"
-```
-
-Returns `400 Bad Request` — the requested API version is not supported.
-
-## How API Versioning Works
-
-The versioning is configured in `Program.cs`:
-
-```csharp
-builder.Services.AddApiVersioning(options =>
+```json
 {
-    options.AssumeDefaultVersionWhenUnspecified = false;   // Clients must always specify ?api-version=
-    options.ReportApiVersions = true;                     // Response headers list supported versions
-    options.ApiVersionReader = new QueryStringApiVersionReader("api-version");  // Read from query string
-})
-.AddMvc();
+  "properties": {
+    "description": "Served by V20250801Preview controller",
+    "status": "Online",
+    "elasticPoolId": "/subscriptions/sub1/.../elasticPools/pool1"
+  }
+}
 ```
 
-Each controller declares which version it handles:
+### V3 fallback chains
 
-```csharp
-[ApiVersion("2025-08-01")]
-[Route("subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases")]
-public class DatabasesController : ControllerBase { ... }
+```bash
+# Delete with V3 — falls back to V1
+curl -X DELETE "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/databases/mydb?api-version=2025-08-01-preview"
+# → { "description": "Served by V20211101 controller" }
+
+# List with V3 — falls back to V2
+curl "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/databases?api-version=2025-08-01-preview"
+# → description: "Served by V20250801 controller"
 ```
 
-When a request arrives with `?api-version=2025-08-01`, ASP.NET Core's endpoint routing matches it to the controller decorated with `[ApiVersion("2025-08-01")]`.
-
-### Version Routing Verification
-
-Every controller response includes a `description` field inside `properties` that identifies which controller handled the request:
-
-| Controller | Description Value |
-|---|---|
-| V20211101 | `"Served by V20211101 controller"` |
-| V20250801 | `"Served by V20250801 controller"` |
-| V20250801Preview | `"Served by V20250801Preview controller"` |
-
-This makes it easy to verify version routing and fallback behavior — if you call `DELETE ?api-version=2025-08-01`, the response logs will show V20211101 handled it (because V20250801 omits DELETE and falls back).
+## How It Works
 
 ### Version Fallback Convention
 
-The `VersionFallbackConvention` (in `Infrastructure/`) implements Azure SQL-style version fallback. It eliminates the need to duplicate unchanged actions across version controllers.
+The `VersionFallbackConvention` (in `Infrastructure/`) implements Azure SQL-style version fallback:
 
-**How it works:**
-
-At startup, the convention scans all controllers and their actions. For each route template + HTTP method combination, it finds which API versions are explicitly supported. If a newer version doesn't have an action that an older version does (same route + method), the older controller's action is automatically registered to also handle the newer version.
-
-**Example:** V20211101 has `GET`, `PUT`, and `DELETE`. V20250801 only has `GET` and `PUT` (because `DELETE` hasn't changed). The convention automatically makes V20211101's `DELETE` also respond to `?api-version=2025-08-01`.
+1. At startup, it scans all controllers and maps each **route + HTTP method** to its API version
+2. For each version gap (a route+method exists in V1 but not V2), it registers the older controller's action to also handle the newer version
+3. This eliminates duplicating unchanged code across versions
 
 ```
-DELETE ?api-version=2021-11-01  →  V20211101.DELETE (direct)
-DELETE ?api-version=2025-08-01  →  V20211101.DELETE (fallback — V20250801 has no DELETE)
-GET    ?api-version=2025-08-01  →  V20250801.GET    (direct — no fallback needed)
+GET {name} ?api-version=2021-11-01         →  V20211101.Get      (direct)
+GET {name} ?api-version=2025-08-01         →  V20211101.Get      (fallback — V2 has no Get)
+GET {name} ?api-version=2025-08-01-preview →  V20250801Preview.Get (direct — reimplemented)
+
+GET        ?api-version=2025-08-01         →  V20250801.List     (direct)
+GET        ?api-version=2025-08-01-preview →  V20250801.List     (fallback — V3 has no List)
+
+DELETE     ?api-version=2025-08-01         →  V20211101.Delete   (fallback)
+DELETE     ?api-version=2025-08-01-preview →  V20211101.Delete   (fallback)
 ```
 
-**Rules:**
+**Fallback rules:**
 - Stable versions only fall back to stable versions
 - Preview versions can fall back to both preview and stable versions
-- The convention uses per-action `MapToApiVersion` to avoid ambiguous route matches
-
-This is registered in `Program.cs` via the versioning library's conventions API:
-
-```csharp
-.AddMvc(options =>
-{
-    options.Conventions.Add(new VersionFallbackConvention());
-})
-```
-
-## API Versions
-
-| Version | Type | Key Differences |
-|---------|------|-----------------|
-| `2021-11-01` | Stable (Legacy) | Uses `Edition` and `ServiceObjective` properties |
-| `2025-08-01` | Stable (Current) | Uses `SKU` model, adds `ZoneRedundant` and `HighAvailabilityReplicaCount`. No `DELETE` (falls back to 2021-11-01) |
-| `2025-08-01-preview` | Preview | Adds `PreferredEnclaveType` and `UseFreeLimit` preview features. Re-implements `DELETE` as async (202) |
+- Uses per-action `MapToApiVersion` to avoid ambiguous route matches
 
 ## Adding a New API Version
 
-1. Create a new version directory: `V20260201/`
-2. Add `Controllers/` and `Models/` subdirectories
-3. Define version-specific models inheriting from `Common.Models.DatabaseProperties`
-4. Create a controller with `[ApiVersion("2026-02-01")]`
-5. Set `Description = "Served by V20260201 controller"` in all response properties for routing verification
-6. **Only implement actions that have changed** — unchanged actions automatically fall back to the previous version's controller via `VersionFallbackConvention`
-7. Build and run — the new version is automatically routed
+1. Create a new version directory (e.g., `V20260201/`)
+2. **Only implement operations that changed** — everything else falls back automatically
+3. Set `Description = "Served by V20260201 controller"` in responses for verification
+4. Build and run — the new version is routed automatically
