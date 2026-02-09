@@ -1,8 +1,14 @@
+using System.Text.Json.Serialization;
+
 namespace AzureSqlVersioningDemo.Common.Models;
 
 /// <summary>
 /// Base database properties shared across all versions.
 /// </summary>
+[JsonDerivedType(typeof(DatabaseProperties))]
+[JsonDerivedType(typeof(V20211101.Models.DatabaseProperties))]
+[JsonDerivedType(typeof(V20211201.Models.DatabaseProperties))]
+[JsonDerivedType(typeof(V20260201.Models.DatabaseProperties))]
 public class DatabaseProperties
 {
     public string? Description { get; set; }

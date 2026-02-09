@@ -112,14 +112,14 @@ public class VersionFallbackConvention : IControllerConvention
                 // Find the controller that explicitly handles this version
                 var exactController = controllers.FirstOrDefault(c => c.OriginalVersions.Contains(version));
 
-                // HTTP methods already covered for this version
-                var coveredMethods = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                // Action signatures already covered for this version (HTTP method + route suffix)
+                var coveredActions = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 if (exactController != null)
                     foreach (var action in exactController.Controller.Actions)
-                        foreach (var method in GetHttpMethods(action))
-                            coveredMethods.Add(method);
+                        foreach (var sig in GetActionSignatures(action))
+                            coveredActions.Add(sig);
 
-                // Find older controllers that can provide missing methods
+                // Find older controllers that can provide missing actions
                 var olderControllers = controllers
                     .Where(c => c.OriginalVersions.All(v => v < version))
                     .Where(c => !isPreview ? c.OriginalVersions.All(v => v.Status == null) : true)
@@ -130,8 +130,8 @@ public class VersionFallbackConvention : IControllerConvention
                 {
                     foreach (var action in older.Controller.Actions)
                     {
-                        var methods = GetHttpMethods(action).ToList();
-                        bool actionNeeded = methods.Any(m => !coveredMethods.Contains(m));
+                        var signatures = GetActionSignatures(action).ToList();
+                        bool actionNeeded = signatures.Any(s => !coveredActions.Contains(s));
 
                         if (actionNeeded)
                         {
@@ -159,9 +159,9 @@ public class VersionFallbackConvention : IControllerConvention
                             if (info.ActionVersionMap.TryGetValue(action.ActionMethod, out var actionVersions))
                                 actionVersions.Add(version);
 
-                            // Mark methods as now covered
-                            foreach (var m in methods)
-                                coveredMethods.Add(m);
+                            // Mark action signatures as now covered
+                            foreach (var s in signatures)
+                                coveredActions.Add(s);
                         }
                     }
                 }
@@ -174,6 +174,15 @@ public class VersionFallbackConvention : IControllerConvention
     private static string NormalizeRouteTemplate(string template)
     {
         return System.Text.RegularExpressions.Regex.Replace(template, @"\{[^}]+\}", "{}");
+    }
+
+    private static IEnumerable<string> GetActionSignatures(ActionModel action)
+    {
+        var routeSuffix = action.Selectors
+            .Select(s => s.AttributeRouteModel?.Template)
+            .FirstOrDefault() ?? "";
+
+        return GetHttpMethods(action).Select(m => $"{m}:{routeSuffix}");
     }
 
     private static IEnumerable<string> GetHttpMethods(ActionModel action)
