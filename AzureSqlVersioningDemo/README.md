@@ -4,7 +4,34 @@ A standalone ASP.NET Core 10 project demonstrating how Azure SQL's API version r
 
 Each controller response includes a `description` field inside `properties` (e.g. `"Served by V20211101 controller"`) so you can verify exactly which controller handled the request.
 
-## Version Evolution
+## How It Works
+
+### Version Fallback Convention
+
+The `VersionFallbackConvention` (in `Infrastructure/`) implements Azure SQL-style version fallback:
+
+1. At startup, it scans all controllers and maps each **route + HTTP method** to its API version
+2. For each version gap (a route+method exists in V1 but not V2), it registers the older controller's action to also handle the newer version
+3. This eliminates duplicating unchanged code across versions
+
+```
+GET {name} ?api-version=2021-11-01  →  V20211101.Get    (direct)
+GET {name} ?api-version=2021-12-01  →  V20211101.Get    (fallback — V2 has no Get)
+GET {name} ?api-version=2026-02-01  →  V20260201.Get    (direct — reimplemented)
+
+GET        ?api-version=2021-12-01  →  V20211201.List   (direct)
+GET        ?api-version=2026-02-01  →  V20211201.List   (fallback — V3 has no List)
+
+DELETE     ?api-version=2021-12-01  →  V20211101.Delete (fallback)
+DELETE     ?api-version=2026-02-01  →  V20211101.Delete (fallback)
+```
+
+**Fallback rules:**
+- Stable versions only fall back to stable versions
+- Preview versions can fall back to both preview and stable versions
+- Uses per-action `MapToApiVersion` to avoid ambiguous route matches
+
+### Version Evolution
 
 The demo uses three API versions with a simple, incremental evolution:
 
@@ -26,8 +53,6 @@ The demo uses three API versions with a simple, incremental evolution:
 
 ```
 AzureSqlVersioningDemo/
-├── Common/
-│   └── Models/Database.cs              # Shared base (DatabaseProperties, DatabaseResource)
 ├── Infrastructure/
 │   └── VersionFallbackConvention.cs    # Azure SQL-style version fallback (IControllerConvention)
 ├── V20211101/                          # API version 2021-11-01
@@ -148,33 +173,6 @@ curl -X DELETE "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/prov
 curl "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/databases?api-version=2026-02-01"
 # → description: "Served by V20211201 controller"
 ```
-
-## How It Works
-
-### Version Fallback Convention
-
-The `VersionFallbackConvention` (in `Infrastructure/`) implements Azure SQL-style version fallback:
-
-1. At startup, it scans all controllers and maps each **route + HTTP method** to its API version
-2. For each version gap (a route+method exists in V1 but not V2), it registers the older controller's action to also handle the newer version
-3. This eliminates duplicating unchanged code across versions
-
-```
-GET {name} ?api-version=2021-11-01         →  V20211101.Get      (direct)
-GET {name} ?api-version=2021-12-01         →  V20211101.Get      (fallback — V2 has no Get)
-GET {name} ?api-version=2026-02-01 →  V20260201.Get (direct — reimplemented)
-
-GET        ?api-version=2021-12-01         →  V20211201.List     (direct)
-GET        ?api-version=2026-02-01 →  V20211201.List     (fallback — V3 has no List)
-
-DELETE     ?api-version=2021-12-01         →  V20211101.Delete   (fallback)
-DELETE     ?api-version=2026-02-01 →  V20211101.Delete   (fallback)
-```
-
-**Fallback rules:**
-- Stable versions only fall back to stable versions
-- Preview versions can fall back to both preview and stable versions
-- Uses per-action `MapToApiVersion` to avoid ambiguous route matches
 
 ## Adding a New API Version
 
