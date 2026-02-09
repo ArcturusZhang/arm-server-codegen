@@ -8,7 +8,7 @@ Each controller response includes a `description` field inside `properties` (e.g
 
 The demo uses three API versions with a simple, incremental evolution:
 
-| Operation | V1 (`2021-11-01`) | V2 (`2025-08-01`) | V3 (`2025-08-01-preview`) |
+| Operation | V1 (`2021-11-01`) | V2 (`2025-08-01`) | V3 (`2026-02-01`) |
 |---|---|---|---|
 | **Create** (PUT) | ✅ implemented | ← fallback to V1 | ✅ reimplemented (new property) |
 | **Get** (GET `{name}`) | ✅ implemented | ← fallback to V1 | ✅ reimplemented (new property) |
@@ -20,7 +20,7 @@ The demo uses three API versions with a simple, incremental evolution:
 
 **V2 (2025-08-01):** Adds List and Update. Since Create, Get, and Delete are unchanged, they fall back to V1's controller automatically.
 
-**V3 (2025-08-01-preview):** Adds an `elasticPoolId` property to `DatabaseProperties`. This impacts Create, Get, and Update (their request/response shapes changed), so those three are reimplemented. Delete falls back to V1; List falls back to V2.
+**V3 (2026-02-01):** Adds an `elasticPoolId` property to `DatabaseProperties`. This impacts Create, Get, and Update (their request/response shapes changed), so those three are reimplemented. Delete falls back to V1; List falls back to V2.
 
 ## Project Structure
 
@@ -36,7 +36,7 @@ AzureSqlVersioningDemo/
 ├── V20250801/                          # API version 2025-08-01
 │   ├── Controllers/DatabasesController.cs   # List, Update (new operations only)
 │   └── Models/Database.cs
-├── V20250801Preview/                   # API version 2025-08-01-preview
+├── V20260201/                          # API version 2026-02-01
 │   ├── Controllers/DatabasesController.cs   # Create, Get, Update (impacted by new property)
 │   └── Models/Database.cs                   # Adds ElasticPoolId
 ├── Program.cs
@@ -125,12 +125,12 @@ curl -X PATCH "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/provi
 
 ```bash
 # Get with V3 — reimplemented, returns elasticPoolId
-curl "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/databases/mydb?api-version=2025-08-01-preview"
+curl "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/databases/mydb?api-version=2026-02-01"
 ```
 ```json
 {
   "properties": {
-    "description": "Served by V20250801Preview controller",
+    "description": "Served by V20260201 controller",
     "status": "Online",
     "elasticPoolId": "/subscriptions/sub1/.../elasticPools/pool1"
   }
@@ -141,11 +141,11 @@ curl "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/providers/Micr
 
 ```bash
 # Delete with V3 — falls back to V1
-curl -X DELETE "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/databases/mydb?api-version=2025-08-01-preview"
+curl -X DELETE "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/databases/mydb?api-version=2026-02-01"
 # → { "description": "Served by V20211101 controller" }
 
 # List with V3 — falls back to V2
-curl "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/databases?api-version=2025-08-01-preview"
+curl "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/databases?api-version=2026-02-01"
 # → description: "Served by V20250801 controller"
 ```
 
@@ -162,13 +162,13 @@ The `VersionFallbackConvention` (in `Infrastructure/`) implements Azure SQL-styl
 ```
 GET {name} ?api-version=2021-11-01         →  V20211101.Get      (direct)
 GET {name} ?api-version=2025-08-01         →  V20211101.Get      (fallback — V2 has no Get)
-GET {name} ?api-version=2025-08-01-preview →  V20250801Preview.Get (direct — reimplemented)
+GET {name} ?api-version=2026-02-01 →  V20260201.Get (direct — reimplemented)
 
 GET        ?api-version=2025-08-01         →  V20250801.List     (direct)
-GET        ?api-version=2025-08-01-preview →  V20250801.List     (fallback — V3 has no List)
+GET        ?api-version=2026-02-01 →  V20250801.List     (fallback — V3 has no List)
 
 DELETE     ?api-version=2025-08-01         →  V20211101.Delete   (fallback)
-DELETE     ?api-version=2025-08-01-preview →  V20211101.Delete   (fallback)
+DELETE     ?api-version=2026-02-01 →  V20211101.Delete   (fallback)
 ```
 
 **Fallback rules:**

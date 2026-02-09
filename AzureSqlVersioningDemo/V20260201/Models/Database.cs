@@ -1,7 +1,7 @@
-namespace AzureSqlVersioningDemo.V20250801Preview.Models;
+namespace AzureSqlVersioningDemo.V20260201.Models;
 
 /// <summary>
-/// Database properties for V2025-08-01-preview.
+/// Database properties for V2026-02-01.
 /// Adds ElasticPoolId property.
 /// </summary>
 public class DatabaseProperties : Common.Models.DatabaseProperties
