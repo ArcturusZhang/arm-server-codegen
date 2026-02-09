@@ -7,4 +7,3 @@ options:
     emitter-output-dir: "{project-root}/Generated"
 emit:
   - "@azure-tools/typespec-autorest"
-  - "@azure-tools/typespec-server-emitter"

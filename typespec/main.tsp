@@ -21,40 +21,24 @@ namespace Microsoft.Sql;
 
 /** Supported API versions. */
 enum Versions {
-  /** Legacy stable version (2021-11-01). Uses Edition/ServiceObjective. */
+  /** Initial stable version (2021-11-01). Create, Get, Delete only. */
   @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)
   v2021_11_01: "2021-11-01",
 
-  /** Current stable version (2025-08-01). Uses SKU model. */
+  /** Second stable version (2021-12-01). Adds List and Update operations. */
   @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)
-  v2025_08_01: "2025-08-01",
+  v2021_12_01: "2021-12-01",
 
-  /** Preview version (2025-08-01-preview). Adds enclave and free tier features. */
+  /** Latest stable version (2026-02-01). Adds ElasticPoolId property. */
   @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)
-  v2025_08_01_preview: "2025-08-01-preview",
+  v2026_02_01: "2026-02-01",
 }
 
 // ---------------------------------------------------------------------------
 // Database resource
 // ---------------------------------------------------------------------------
 
-/** SKU information for a database. Introduced in 2025-08-01. */
-@added(Versions.v2025_08_01)
-model SkuInfo {
-  /** The name of the SKU (e.g., S0, GP_S_Gen5_2). */
-  name: string;
-
-  /** The tier of the SKU (e.g., Standard, GeneralPurpose). */
-  tier?: string;
-
-  /** The family of the SKU (e.g., Gen5). */
-  family?: string;
-
-  /** The capacity of the SKU. */
-  capacity?: int32;
-}
-
-/** Base database properties shared across all versions. */
+/** Database resource properties. */
 model DatabaseProperties {
   /** The collation of the database. */
   collation?: string;
@@ -74,39 +58,9 @@ model DatabaseProperties {
   @visibility(Lifecycle.Read)
   provisioningState?: ProvisioningState;
 
-  // --- V2021-11-01 legacy properties ---
-
-  /** The edition of the database (e.g., Standard, Premium). Deprecated in 2025-08-01. */
-  @removed(Versions.v2025_08_01)
-  edition?: string;
-
-  /** The service objective (e.g., S0, P1). Deprecated in 2025-08-01. */
-  @removed(Versions.v2025_08_01)
-  serviceObjective?: string;
-
-  // --- V2025-08-01 properties ---
-
-  /** The SKU of the database. Replaces edition/serviceObjective. */
-  @added(Versions.v2025_08_01)
-  sku?: SkuInfo;
-
-  /** Whether the database is zone redundant. */
-  @added(Versions.v2025_08_01)
-  zoneRedundant?: string;
-
-  /** The number of high availability replicas. */
-  @added(Versions.v2025_08_01)
-  highAvailabilityReplicaCount?: int32;
-
-  // --- V2025-08-01-preview properties ---
-
-  /** The preferred enclave type (preview feature). */
-  @added(Versions.v2025_08_01_preview)
-  preferredEnclaveType?: string;
-
-  /** Whether to use the free database limit (preview feature). */
-  @added(Versions.v2025_08_01_preview)
-  useFreeLimit?: boolean;
+  /** The resource ID of the elastic pool containing this database. */
+  @added(Versions.v2026_02_01)
+  elasticPoolId?: string;
 }
 
 /** A SQL Database resource. */
@@ -116,10 +70,6 @@ model Database is TrackedResource<DatabaseProperties> {
   @segment("databases")
   @path
   name: string;
-
-  /** The SKU of the database (top-level). */
-  @added(Versions.v2025_08_01)
-  sku?: SkuInfo;
 }
 
 // ---------------------------------------------------------------------------
@@ -162,11 +112,13 @@ interface Databases {
   /** Deletes a database (long-running operation). */
   delete is ArmResourceDeleteWithoutOkAsync<Database>;
 
-  /** Lists databases in a resource group. */
-  listByResourceGroup is ArmResourceListByParent<Database>;
+  /** Updates a database. Added in 2021-12-01. */
+  @added(Versions.v2021_12_01)
+  update is ArmCustomPatchSync<Database, Database>;
 
-  /** Lists databases in a subscription. */
-  listBySubscription is ArmListBySubscription<Database>;
+  /** Lists databases under a server. Added in 2021-12-01. */
+  @added(Versions.v2021_12_01)
+  listByResourceGroup is ArmResourceListByParent<Database>;
 }
 
 /** ARM operations endpoint. */

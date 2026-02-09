@@ -44,13 +44,37 @@ foreach ($dir in $dirsToClean) {
     }
 }
 
-# Step 3: Regenerate
-Write-Host "==> Running tsp compile..." -ForegroundColor Cyan
+# Step 3: Regenerate swagger (autorest emitter)
+Write-Host "==> Running tsp compile (swagger)..." -ForegroundColor Cyan
 Push-Location $typespecDir
 try {
     npx tsp compile .
     if ($LASTEXITCODE -ne 0) { throw "TypeSpec compilation failed." }
-    Write-Host "==> Done!" -ForegroundColor Green
+    Write-Host "    Swagger generation succeeded." -ForegroundColor Green
 } finally {
     Pop-Location
 }
+
+# Step 4: Run server-code-emitter for each version
+$versions = @("2021-11-01", "2021-12-01", "2026-02-01")
+foreach ($version in $versions) {
+    $versionOutput = Join-Path $typespecDir "Generated" $version
+    Write-Host "==> Analyzing version: $version" -ForegroundColor Cyan
+
+    Push-Location $typespecDir
+    try {
+        npx tsp compile . `
+            --emit "@azure-tools/typespec-server-emitter" `
+            --option "@azure-tools/typespec-server-emitter.version=$version" `
+            --option "@azure-tools/typespec-server-emitter.emitter-output-dir=$versionOutput"
+        if ($LASTEXITCODE -ne 0) { throw "Server emitter failed for version $version" }
+    } finally {
+        Pop-Location
+    }
+
+    Write-Host ""
+    Get-Content (Join-Path $versionOutput "impact-analysis.txt")
+    Write-Host ""
+}
+
+Write-Host "==> Done!" -ForegroundColor Green
