@@ -48,6 +48,7 @@ public class DatabasesController : ControllerBase
             },
             Properties = new Models.DatabaseProperties
             {
+                Description = "Served by V20250801Preview controller",
                 Collation = "SQL_Latin1_General_CP1_CI_AS",
                 MaxSizeBytes = 268435456000,
                 Status = "Online",
@@ -82,6 +83,7 @@ public class DatabasesController : ControllerBase
                 Sku = new SkuInfo { Name = "GP_S_Gen5_2", Tier = "GeneralPurpose", Family = "Gen5", Capacity = 2 },
                 Properties = new Models.DatabaseProperties
                 {
+                    Description = "Served by V20250801Preview controller",
                     Status = "Online",
                     PreferredEnclaveType = "VBS",
                     UseFreeLimit = false
@@ -96,6 +98,7 @@ public class DatabasesController : ControllerBase
                 Sku = new SkuInfo { Name = "GP_S_Gen5_1", Tier = "GeneralPurpose", Family = "Gen5", Capacity = 1 },
                 Properties = new Models.DatabaseProperties
                 {
+                    Description = "Served by V20250801Preview controller",
                     Status = "Online",
                     PreferredEnclaveType = "Default",
                     UseFreeLimit = true
@@ -136,6 +139,7 @@ public class DatabasesController : ControllerBase
             Sku = request.Sku ?? new SkuInfo { Name = "GP_S_Gen5_2", Tier = "GeneralPurpose" },
             Properties = new Models.DatabaseProperties
             {
+                Description = "Served by V20250801Preview controller",
                 Status = "Creating",
                 PreferredEnclaveType = "VBS",
                 UseFreeLimit = false
@@ -185,6 +189,7 @@ public class DatabasesController : ControllerBase
             Sku = new SkuInfo { Name = "GP_S_Gen5_2", Tier = "GeneralPurpose" },
             Properties = new Models.DatabaseProperties
             {
+                Description = "Served by V20250801Preview controller",
                 Status = "Online",
                 CreationDate = DateTimeOffset.UtcNow,
                 PreferredEnclaveType = "VBS",

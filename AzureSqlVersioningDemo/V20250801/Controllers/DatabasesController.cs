@@ -49,6 +49,7 @@ public class DatabasesController : ControllerBase
             },
             Properties = new Models.DatabaseProperties
             {
+                Description = "Served by V20250801 controller",
                 Collation = "SQL_Latin1_General_CP1_CI_AS",
                 MaxSizeBytes = 268435456000,
                 Status = "Online",
@@ -81,6 +82,7 @@ public class DatabasesController : ControllerBase
                 Sku = new SkuInfo { Name = "S0", Tier = "Standard" },
                 Properties = new Models.DatabaseProperties
                 {
+                    Description = "Served by V20250801 controller",
                     Status = "Online",
                     ZoneRedundant = "Disabled"
                 }
@@ -131,6 +133,7 @@ public class DatabasesController : ControllerBase
             Sku = request.Sku ?? new SkuInfo { Name = "S0", Tier = "Standard" },
             Properties = new Models.DatabaseProperties
             {
+                Description = "Served by V20250801 controller",
                 Status = "Creating"
             }
         });
@@ -193,6 +196,7 @@ public class DatabasesController : ControllerBase
             Sku = new SkuInfo { Name = "S0", Tier = "Standard" },
             Properties = new Models.DatabaseProperties
             {
+                Description = "Served by V20250801 controller",
                 Status = "Online",
                 CreationDate = DateTimeOffset.UtcNow
             }

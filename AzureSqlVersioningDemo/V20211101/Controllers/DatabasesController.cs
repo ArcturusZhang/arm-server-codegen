@@ -41,6 +41,7 @@ public class DatabasesController : ControllerBase
             Location = "eastus",
             Properties = new Models.DatabaseProperties
             {
+                Description = "Served by V20211101 controller",
                 Collation = "SQL_Latin1_General_CP1_CI_AS",
                 MaxSizeBytes = 268435456000,
                 Status = "Online",
@@ -72,6 +73,7 @@ public class DatabasesController : ControllerBase
                 Location = "eastus",
                 Properties = new Models.DatabaseProperties
                 {
+                    Description = "Served by V20211101 controller",
                     Status = "Online",
                     Edition = "Standard",
                     ServiceObjective = "S0"
@@ -102,6 +104,7 @@ public class DatabasesController : ControllerBase
             Tags = request.Tags,
             Properties = new Models.DatabaseProperties
             {
+                Description = "Served by V20211101 controller",
                 Status = "Creating",
                 Edition = "Standard",
                 ServiceObjective = "S0"

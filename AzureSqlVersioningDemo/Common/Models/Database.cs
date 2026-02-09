@@ -5,6 +5,7 @@ namespace AzureSqlVersioningDemo.Common.Models;
 /// </summary>
 public class DatabaseProperties
 {
+    public string? Description { get; set; }
     public string? Collation { get; set; }
     public long? MaxSizeBytes { get; set; }
     public string? Status { get; set; }

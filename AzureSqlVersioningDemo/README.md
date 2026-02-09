@@ -2,6 +2,8 @@
 
 A standalone ASP.NET Core 10 project demonstrating how Azure SQL's API version routing mechanism works using the `Asp.Versioning.Mvc` package. It mimics the Azure Resource Manager (ARM) patterns including versioned controllers, version-specific response models, and long-running operations (LRO).
 
+Each version's controller sets a `description` field inside `properties` (e.g. `"Served by V20211101 controller"`) so you can verify which controller actually handled the request — especially useful for testing version fallback behavior.
+
 ## Project Structure
 
 ```
@@ -53,7 +55,7 @@ The server starts on `http://localhost:5188` by default.
 curl "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/databases/mydb?api-version=2021-11-01"
 ```
 
-Response includes legacy properties (`edition`, `serviceObjective`):
+Response includes legacy properties (`edition`, `serviceObjective`) and the version routing indicator:
 ```json
 {
   "id": "/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/databases/mydb",
@@ -61,6 +63,7 @@ Response includes legacy properties (`edition`, `serviceObjective`):
   "type": "Microsoft.Sql/servers/databases",
   "location": "eastus",
   "properties": {
+    "description": "Served by V20211101 controller",
     "edition": "Standard",
     "serviceObjective": "S0",
     "status": "Online"
@@ -83,6 +86,7 @@ Response uses SKU model instead:
   "location": "eastus",
   "sku": { "name": "S0", "tier": "Standard", "capacity": 10 },
   "properties": {
+    "description": "Served by V20250801 controller",
     "zoneRedundant": "Disabled",
     "highAvailabilityReplicaCount": 0,
     "status": "Online"
@@ -105,6 +109,7 @@ Response includes preview-only features:
   "location": "eastus",
   "sku": { "name": "GP_S_Gen5_2", "tier": "GeneralPurpose", "family": "Gen5", "capacity": 2 },
   "properties": {
+    "description": "Served by V20250801Preview controller",
     "preferredEnclaveType": "VBS",
     "useFreeLimit": true,
     "status": "Online"
@@ -112,7 +117,19 @@ Response includes preview-only features:
 }
 ```
 
-### 4. Test Long-Running Operations (LRO)
+### 4. Test Version Fallback (Delete)
+
+V20250801 intentionally omits the `DELETE` action. The `VersionFallbackConvention` routes it to V20211101's implementation. You can verify this by checking the `description` field in the server logs — the V20211101 controller handles the request.
+
+```bash
+# DELETE with api-version=2025-08-01 is served by V20211101 controller (fallback)
+curl -i -X DELETE "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/databases/mydb?api-version=2025-08-01"
+
+# DELETE with api-version=2025-08-01-preview is served by V20250801Preview controller (direct)
+curl -i -X DELETE "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/databases/mydb?api-version=2025-08-01-preview"
+```
+
+### 5. Test Long-Running Operations (LRO)
 
 **Create a database (returns 202 Accepted):**
 
@@ -130,6 +147,8 @@ Azure-AsyncOperation: http://localhost:5188/.../azureAsyncOperation/{operationId
 Retry-After: 15
 ```
 
+The response body includes `"description": "Served by V20250801 controller"` in properties.
+
 **Poll the operation status:**
 
 ```bash
@@ -140,11 +159,11 @@ curl "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/providers/Micr
 curl "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/databases/newdb/operationResults/{operationId}?api-version=2025-08-01"
 ```
 
-### 5. Test with the .http file
+### 6. Test with the .http file
 
 Open `AzureSqlVersioningDemo.http` in Visual Studio or VS Code (with REST Client extension) to run pre-built requests for all versions.
 
-### 6. Request an unsupported version
+### 7. Request an unsupported version
 
 ```bash
 curl "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/databases/mydb?api-version=2019-01-01"
@@ -175,6 +194,18 @@ public class DatabasesController : ControllerBase { ... }
 ```
 
 When a request arrives with `?api-version=2025-08-01`, ASP.NET Core's endpoint routing matches it to the controller decorated with `[ApiVersion("2025-08-01")]`.
+
+### Version Routing Verification
+
+Every controller response includes a `description` field inside `properties` that identifies which controller handled the request:
+
+| Controller | Description Value |
+|---|---|
+| V20211101 | `"Served by V20211101 controller"` |
+| V20250801 | `"Served by V20250801 controller"` |
+| V20250801Preview | `"Served by V20250801Preview controller"` |
+
+This makes it easy to verify version routing and fallback behavior — if you call `DELETE ?api-version=2025-08-01`, the response logs will show V20211101 handled it (because V20250801 omits DELETE and falls back).
 
 ### Version Fallback Convention
 
@@ -211,8 +242,8 @@ This is registered in `Program.cs` via the versioning library's conventions API:
 | Version | Type | Key Differences |
 |---------|------|-----------------|
 | `2021-11-01` | Stable (Legacy) | Uses `Edition` and `ServiceObjective` properties |
-| `2025-08-01` | Stable (Current) | Uses `SKU` model, adds `ZoneRedundant` and `HighAvailabilityReplicaCount` |
-| `2025-08-01-preview` | Preview | Adds `PreferredEnclaveType` and `UseFreeLimit` preview features |
+| `2025-08-01` | Stable (Current) | Uses `SKU` model, adds `ZoneRedundant` and `HighAvailabilityReplicaCount`. No `DELETE` (falls back to 2021-11-01) |
+| `2025-08-01-preview` | Preview | Adds `PreferredEnclaveType` and `UseFreeLimit` preview features. Re-implements `DELETE` as async (202) |
 
 ## Adding a New API Version
 
@@ -220,5 +251,6 @@ This is registered in `Program.cs` via the versioning library's conventions API:
 2. Add `Controllers/` and `Models/` subdirectories
 3. Define version-specific models inheriting from `Common.Models.DatabaseProperties`
 4. Create a controller with `[ApiVersion("2026-02-01")]`
-5. **Only implement actions that have changed** — unchanged actions automatically fall back to the previous version's controller via `VersionFallbackConvention`
-6. Build and run — the new version is automatically routed
+5. Set `Description = "Served by V20260201 controller"` in all response properties for routing verification
+6. **Only implement actions that have changed** — unchanged actions automatically fall back to the previous version's controller via `VersionFallbackConvention`
+7. Build and run — the new version is automatically routed
