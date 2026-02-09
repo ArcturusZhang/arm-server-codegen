@@ -1,0 +1,20 @@
+{
+  "name": "test",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@azure-tools/typespec-server-emitter": "file:..",
+    "@typespec/compiler": "^1.8.0",
+    "@typespec/http": "^1.8.0",
+    "@typespec/rest": "^0.78.0",
+    "@typespec/versioning": "^0.78.0"
+  }
+}

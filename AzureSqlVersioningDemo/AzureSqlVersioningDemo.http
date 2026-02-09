@@ -1,0 +1,123 @@
+@AzureSqlVersioningDemo_HostAddress = http://localhost:5188
+
+### Variables
+@subscriptionId = 00000000-0000-0000-0000-000000000001
+@resourceGroupName = myResourceGroup
+@serverName = myserver
+@databaseName = mydb
+
+###############################################
+# API Version 2021-11-01 (Legacy Stable)
+# Uses Edition/ServiceObjective instead of SKU
+###############################################
+
+### Get Database (v2021-11-01)
+GET {{AzureSqlVersioningDemo_HostAddress}}/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Sql/servers/{{serverName}}/databases/{{databaseName}}?api-version=2021-11-01
+Accept: application/json
+
+### List Databases (v2021-11-01)
+GET {{AzureSqlVersioningDemo_HostAddress}}/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Sql/servers/{{serverName}}/databases?api-version=2021-11-01
+Accept: application/json
+
+### Create Database (v2021-11-01)
+PUT {{AzureSqlVersioningDemo_HostAddress}}/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Sql/servers/{{serverName}}/databases/{{databaseName}}?api-version=2021-11-01
+Content-Type: application/json
+
+{
+  "location": "eastus",
+  "properties": {
+    "collation": "SQL_Latin1_General_CP1_CI_AS",
+    "maxSizeBytes": 268435456000
+  }
+}
+
+###############################################
+# API Version 2025-08-01 (Current Stable)
+# Uses SKU, supports ZoneRedundant, HA replicas
+###############################################
+
+### Get Database (v2025-08-01)
+GET {{AzureSqlVersioningDemo_HostAddress}}/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Sql/servers/{{serverName}}/databases/{{databaseName}}?api-version=2025-08-01
+Accept: application/json
+
+### List Databases (v2025-08-01)
+GET {{AzureSqlVersioningDemo_HostAddress}}/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Sql/servers/{{serverName}}/databases?api-version=2025-08-01
+Accept: application/json
+
+### Create Database (v2025-08-01) - Long Running Operation
+# Returns 202 Accepted with Location and Azure-AsyncOperation headers
+PUT {{AzureSqlVersioningDemo_HostAddress}}/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Sql/servers/{{serverName}}/databases/{{databaseName}}?api-version=2025-08-01
+Content-Type: application/json
+
+{
+  "location": "eastus",
+  "sku": {
+    "name": "S0",
+    "tier": "Standard"
+  },
+  "properties": {
+    "collation": "SQL_Latin1_General_CP1_CI_AS",
+    "maxSizeBytes": 268435456000,
+    "zoneRedundant": "Disabled"
+  }
+}
+
+### Delete Database (v2025-08-01) - Long Running Operation
+DELETE {{AzureSqlVersioningDemo_HostAddress}}/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Sql/servers/{{serverName}}/databases/{{databaseName}}?api-version=2025-08-01
+
+###############################################
+# API Version 2025-08-01-preview
+# Includes preview features: PreferredEnclaveType, UseFreeLimit
+###############################################
+
+### Get Database (v2025-08-01-preview)
+GET {{AzureSqlVersioningDemo_HostAddress}}/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Sql/servers/{{serverName}}/databases/{{databaseName}}?api-version=2025-08-01-preview
+Accept: application/json
+
+### List Databases (v2025-08-01-preview)
+GET {{AzureSqlVersioningDemo_HostAddress}}/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Sql/servers/{{serverName}}/databases?api-version=2025-08-01-preview
+Accept: application/json
+
+### Create Database with Preview Features
+PUT {{AzureSqlVersioningDemo_HostAddress}}/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Sql/servers/{{serverName}}/databases/previewDb?api-version=2025-08-01-preview
+Content-Type: application/json
+
+{
+  "location": "eastus",
+  "sku": {
+    "name": "GP_S_Gen5_2",
+    "tier": "GeneralPurpose",
+    "family": "Gen5",
+    "capacity": 2
+  },
+  "properties": {
+    "collation": "SQL_Latin1_General_CP1_CI_AS",
+    "maxSizeBytes": 268435456000,
+    "preferredEnclaveType": "VBS",
+    "useFreeLimit": true
+  }
+}
+
+###############################################
+# Long Running Operation Polling Endpoints
+###############################################
+
+### Check async operation status (Azure-AsyncOperation URL)
+# Replace {operationId} with actual ID from response headers
+GET {{AzureSqlVersioningDemo_HostAddress}}/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Sql/servers/{{serverName}}/databases/{{databaseName}}/azureAsyncOperation/{operationId}?api-version=2025-08-01
+Accept: application/json
+
+### Get operation result (Location URL)
+# Returns the created resource when operation completes
+GET {{AzureSqlVersioningDemo_HostAddress}}/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Sql/servers/{{serverName}}/databases/{{databaseName}}/operationResults/{operationId}?api-version=2025-08-01
+Accept: application/json
+
+###############################################
+# Version Not Found Test
+###############################################
+
+### Request with unsupported version (should return 400)
+GET {{AzureSqlVersioningDemo_HostAddress}}/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Sql/servers/{{serverName}}/databases/{{databaseName}}?api-version=2019-01-01
+Accept: application/json
+
+###
