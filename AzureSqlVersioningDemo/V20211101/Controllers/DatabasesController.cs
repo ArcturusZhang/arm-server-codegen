@@ -1,5 +1,5 @@
 using Asp.Versioning;
-using AzureSqlVersioningDemo.Common.Models;
+using AzureSqlVersioningDemo.V20211101.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AzureSqlVersioningDemo.V20211101.Controllers;
@@ -32,7 +32,7 @@ public class DatabasesController : ControllerBase
             Name = databaseName,
             Type = "Microsoft.Sql/servers/databases",
             Location = "eastus",
-            Properties = new V20211101.Models.DatabaseProperties
+            Properties = new DatabaseProperties
             {
                 Description = "Served by V20211101 controller",
                 Collation = "SQL_Latin1_General_CP1_CI_AS",
@@ -57,7 +57,7 @@ public class DatabasesController : ControllerBase
             Type = "Microsoft.Sql/servers/databases",
             Location = request.Location ?? "eastus",
             Tags = request.Tags,
-            Properties = new V20211101.Models.DatabaseProperties
+            Properties = new DatabaseProperties
             {
                 Description = "Served by V20211101 controller",
                 Status = "Creating"

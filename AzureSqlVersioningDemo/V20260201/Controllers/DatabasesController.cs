@@ -1,5 +1,5 @@
 using Asp.Versioning;
-using AzureSqlVersioningDemo.Common.Models;
+using AzureSqlVersioningDemo.V20260201.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AzureSqlVersioningDemo.V20260201.Controllers;
@@ -33,7 +33,7 @@ public class DatabasesController : ControllerBase
             Name = databaseName,
             Type = "Microsoft.Sql/servers/databases",
             Location = "eastus",
-            Properties = new V20260201.Models.DatabaseProperties
+            Properties = new DatabaseProperties
             {
                 Description = "Served by V20260201 controller",
                 Collation = "SQL_Latin1_General_CP1_CI_AS",
@@ -52,7 +52,7 @@ public class DatabasesController : ControllerBase
     {
         _logger.LogInformation("PUT Database - served by V20260201 controller");
 
-        var props = request.Properties as V20260201.Models.DatabaseProperties;
+        var props = request.Properties as DatabaseProperties;
 
         return Ok(new DatabaseResource
         {
@@ -61,7 +61,7 @@ public class DatabasesController : ControllerBase
             Type = "Microsoft.Sql/servers/databases",
             Location = request.Location ?? "eastus",
             Tags = request.Tags,
-            Properties = new V20260201.Models.DatabaseProperties
+            Properties = new DatabaseProperties
             {
                 Description = "Served by V20260201 controller",
                 Status = "Creating",
@@ -77,7 +77,7 @@ public class DatabasesController : ControllerBase
     {
         _logger.LogInformation("PATCH Database - served by V20260201 controller");
 
-        var props = request.Properties as V20260201.Models.DatabaseProperties;
+        var props = request.Properties as DatabaseProperties;
 
         return Ok(new DatabaseResource
         {
@@ -85,7 +85,7 @@ public class DatabasesController : ControllerBase
             Name = databaseName,
             Type = "Microsoft.Sql/servers/databases",
             Location = "eastus",
-            Properties = new V20260201.Models.DatabaseProperties
+            Properties = new DatabaseProperties
             {
                 Description = "Served by V20260201 controller",
                 Collation = request.Properties?.Collation ?? "SQL_Latin1_General_CP1_CI_AS",
