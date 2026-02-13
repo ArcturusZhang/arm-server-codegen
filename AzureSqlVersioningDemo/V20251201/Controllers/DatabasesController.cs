@@ -1,16 +1,16 @@
 using Asp.Versioning;
-using AzureSqlVersioningDemo.V20211201.Models;
+using AzureSqlVersioningDemo.V20251201.Models;
 using Microsoft.AspNetCore.Mvc;
 
-namespace AzureSqlVersioningDemo.V20211201.Controllers;
+namespace AzureSqlVersioningDemo.V20251201.Controllers;
 
 /// <summary>
-/// Database controller for API version 2021-12-01.
+/// Database controller for API version 2025-12-01.
 /// Only implements new operations: List (GET) and Update (PATCH).
-/// Create, Get, and Delete fall back to V20211101 via VersionFallbackConvention.
+/// Create, Get, and Delete fall back to V20251101 via VersionFallbackConvention.
 /// </summary>
 [ApiController]
-[ApiVersion("2021-12-01")]
+[ApiVersion("2025-12-01")]
 [Route("subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases")]
 public class DatabasesController : ControllerBase
 {
@@ -25,7 +25,7 @@ public class DatabasesController : ControllerBase
     public ActionResult<IEnumerable<DatabaseResource>> List(
         string subscriptionId, string resourceGroupName, string serverName)
     {
-        _logger.LogInformation("LIST Databases - served by V20211201 controller");
+        _logger.LogInformation("LIST Databases - served by V20251201 controller");
 
         return Ok(new[]
         {
@@ -37,7 +37,7 @@ public class DatabasesController : ControllerBase
                 Location = "eastus",
                 Properties = new DatabaseProperties
                 {
-                    Description = "Served by V20211201 controller",
+                    Description = "Served by V20251201 controller",
                     Status = "Online"
                 }
             }
@@ -49,7 +49,7 @@ public class DatabasesController : ControllerBase
         string subscriptionId, string resourceGroupName, string serverName, string databaseName,
         [FromBody] DatabaseResource request)
     {
-        _logger.LogInformation("PATCH Database - served by V20211201 controller");
+        _logger.LogInformation("PATCH Database - served by V20251201 controller");
 
         return Ok(new DatabaseResource
         {
@@ -59,12 +59,12 @@ public class DatabasesController : ControllerBase
             Location = "eastus",
             Properties = new DatabaseProperties
             {
-                Description = "Served by V20211201 controller",
+                Description = "Served by V20251201 controller",
                 Collation = request.Properties?.Collation ?? "SQL_Latin1_General_CP1_CI_AS",
                 Status = "Online"
             }
         });
     }
 
-    // Create (PUT), Get (GET {name}), Delete (DELETE) fall back to V20211101.
+    // Create (PUT), Get (GET {name}), Delete (DELETE) fall back to V20251101.
 }

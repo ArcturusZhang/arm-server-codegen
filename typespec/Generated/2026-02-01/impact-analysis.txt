@@ -4,7 +4,7 @@
 ======================================================================
 
 Version: 2026-02-01
-Compared against: 2021-12-01
+Compared against: 2025-12-01
 
 All operations: Databases.get, Databases.createOrUpdate, Databases.delete, Databases.update, Databases.listByResourceGroup, Operations.list
 

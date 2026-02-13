@@ -56,7 +56,7 @@ try {
 }
 
 # Step 4: Run server-code-emitter for each version
-$versions = @("2021-11-01", "2021-12-01", "2026-02-01")
+$versions = @("2025-11-01", "2025-12-01", "2026-02-01")
 foreach ($version in $versions) {
     $versionOutput = Join-Path $typespecDir "Generated" $version
     Write-Host "==> Analyzing version: $version" -ForegroundColor Cyan

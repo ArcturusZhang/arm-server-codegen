@@ -7,20 +7,16 @@
 @databaseName = mydb
 
 ###############################################
-# API Version 2021-11-01 (Legacy Stable)
-# Uses Edition/ServiceObjective instead of SKU
+# API Version 2025-11-01 (V1)
+# Operations: Create (PUT), Get (GET), Delete (DELETE)
 ###############################################
 
-### Get Database (v2021-11-01)
-GET {{AzureSqlVersioningDemo_HostAddress}}/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Sql/servers/{{serverName}}/databases/{{databaseName}}?api-version=2021-11-01
+### Get Database (v2025-11-01)
+GET {{AzureSqlVersioningDemo_HostAddress}}/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Sql/servers/{{serverName}}/databases/{{databaseName}}?api-version=2025-11-01
 Accept: application/json
 
-### List Databases (v2021-11-01)
-GET {{AzureSqlVersioningDemo_HostAddress}}/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Sql/servers/{{serverName}}/databases?api-version=2021-11-01
-Accept: application/json
-
-### Create Database (v2021-11-01)
-PUT {{AzureSqlVersioningDemo_HostAddress}}/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Sql/servers/{{serverName}}/databases/{{databaseName}}?api-version=2021-11-01
+### Create Database (v2025-11-01)
+PUT {{AzureSqlVersioningDemo_HostAddress}}/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Sql/servers/{{serverName}}/databases/{{databaseName}}?api-version=2025-11-01
 Content-Type: application/json
 
 {
@@ -31,86 +27,75 @@ Content-Type: application/json
   }
 }
 
+### Delete Database (v2025-11-01)
+DELETE {{AzureSqlVersioningDemo_HostAddress}}/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Sql/servers/{{serverName}}/databases/{{databaseName}}?api-version=2025-11-01
+
 ###############################################
-# API Version 2025-08-01 (Current Stable)
-# Uses SKU, supports ZoneRedundant, HA replicas
+# API Version 2025-12-01 (V2)
+# New operations: List (GET), Update (PATCH)
+# Create, Get, Delete fall back to V1
 ###############################################
 
-### Get Database (v2025-08-01)
-GET {{AzureSqlVersioningDemo_HostAddress}}/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Sql/servers/{{serverName}}/databases/{{databaseName}}?api-version=2025-08-01
+### Get Database (v2025-12-01) → falls back to V20251101
+GET {{AzureSqlVersioningDemo_HostAddress}}/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Sql/servers/{{serverName}}/databases/{{databaseName}}?api-version=2025-12-01
 Accept: application/json
 
-### List Databases (v2025-08-01)
-GET {{AzureSqlVersioningDemo_HostAddress}}/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Sql/servers/{{serverName}}/databases?api-version=2025-08-01
+### List Databases (v2025-12-01)
+GET {{AzureSqlVersioningDemo_HostAddress}}/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Sql/servers/{{serverName}}/databases?api-version=2025-12-01
 Accept: application/json
 
-### Create Database (v2025-08-01) - Long Running Operation
-# Returns 202 Accepted with Location and Azure-AsyncOperation headers
-PUT {{AzureSqlVersioningDemo_HostAddress}}/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Sql/servers/{{serverName}}/databases/{{databaseName}}?api-version=2025-08-01
+### Update Database (v2025-12-01)
+PATCH {{AzureSqlVersioningDemo_HostAddress}}/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Sql/servers/{{serverName}}/databases/{{databaseName}}?api-version=2025-12-01
+Content-Type: application/json
+
+{
+  "properties": {
+    "collation": "SQL_Latin1_General_CP1_CI_AS"
+  }
+}
+
+### Delete Database (v2025-12-01) → falls back to V20251101
+DELETE {{AzureSqlVersioningDemo_HostAddress}}/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Sql/servers/{{serverName}}/databases/{{databaseName}}?api-version=2025-12-01
+
+###############################################
+# API Version 2026-02-01 (V3)
+# Adds ElasticPoolId property → reimplements Create, Get, Update
+# Delete falls back to V1, List falls back to V2
+###############################################
+
+### Get Database (v2026-02-01) → served by V20260201 (ElasticPoolId in response)
+GET {{AzureSqlVersioningDemo_HostAddress}}/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Sql/servers/{{serverName}}/databases/{{databaseName}}?api-version=2026-02-01
+Accept: application/json
+
+### Create Database (v2026-02-01) with ElasticPoolId
+PUT {{AzureSqlVersioningDemo_HostAddress}}/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Sql/servers/{{serverName}}/databases/{{databaseName}}?api-version=2026-02-01
 Content-Type: application/json
 
 {
   "location": "eastus",
-  "sku": {
-    "name": "S0",
-    "tier": "Standard"
-  },
   "properties": {
     "collation": "SQL_Latin1_General_CP1_CI_AS",
     "maxSizeBytes": 268435456000,
-    "zoneRedundant": "Disabled"
+    "elasticPoolId": "/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/elasticPools/pool1"
   }
 }
 
-### Delete Database (v2025-08-01) - Long Running Operation
-DELETE {{AzureSqlVersioningDemo_HostAddress}}/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Sql/servers/{{serverName}}/databases/{{databaseName}}?api-version=2025-08-01
-
-###############################################
-# API Version 2025-08-01-preview
-# Includes preview features: PreferredEnclaveType, UseFreeLimit
-###############################################
-
-### Get Database (v2025-08-01-preview)
-GET {{AzureSqlVersioningDemo_HostAddress}}/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Sql/servers/{{serverName}}/databases/{{databaseName}}?api-version=2025-08-01-preview
+### List Databases (v2026-02-01) → falls back to V20251201
+GET {{AzureSqlVersioningDemo_HostAddress}}/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Sql/servers/{{serverName}}/databases?api-version=2026-02-01
 Accept: application/json
 
-### List Databases (v2025-08-01-preview)
-GET {{AzureSqlVersioningDemo_HostAddress}}/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Sql/servers/{{serverName}}/databases?api-version=2025-08-01-preview
-Accept: application/json
-
-### Create Database with Preview Features
-PUT {{AzureSqlVersioningDemo_HostAddress}}/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Sql/servers/{{serverName}}/databases/previewDb?api-version=2025-08-01-preview
+### Update Database (v2026-02-01) with ElasticPoolId
+PATCH {{AzureSqlVersioningDemo_HostAddress}}/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Sql/servers/{{serverName}}/databases/{{databaseName}}?api-version=2026-02-01
 Content-Type: application/json
 
 {
-  "location": "eastus",
-  "sku": {
-    "name": "GP_S_Gen5_2",
-    "tier": "GeneralPurpose",
-    "family": "Gen5",
-    "capacity": 2
-  },
   "properties": {
-    "collation": "SQL_Latin1_General_CP1_CI_AS",
-    "maxSizeBytes": 268435456000,
-    "preferredEnclaveType": "VBS",
-    "useFreeLimit": true
+    "elasticPoolId": "/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/elasticPools/pool1"
   }
 }
 
-###############################################
-# Long Running Operation Polling Endpoints
-###############################################
-
-### Check async operation status (Azure-AsyncOperation URL)
-# Replace {operationId} with actual ID from response headers
-GET {{AzureSqlVersioningDemo_HostAddress}}/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Sql/servers/{{serverName}}/databases/{{databaseName}}/azureAsyncOperation/{operationId}?api-version=2025-08-01
-Accept: application/json
-
-### Get operation result (Location URL)
-# Returns the created resource when operation completes
-GET {{AzureSqlVersioningDemo_HostAddress}}/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Sql/servers/{{serverName}}/databases/{{databaseName}}/operationResults/{operationId}?api-version=2025-08-01
-Accept: application/json
+### Delete Database (v2026-02-01) → falls back to V20251101
+DELETE {{AzureSqlVersioningDemo_HostAddress}}/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Sql/servers/{{serverName}}/databases/{{databaseName}}?api-version=2026-02-01
 
 ###############################################
 # Version Not Found Test

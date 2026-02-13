@@ -1,15 +1,15 @@
 using Asp.Versioning;
-using AzureSqlVersioningDemo.V20211101.Models;
+using AzureSqlVersioningDemo.V20251101.Models;
 using Microsoft.AspNetCore.Mvc;
 
-namespace AzureSqlVersioningDemo.V20211101.Controllers;
+namespace AzureSqlVersioningDemo.V20251101.Controllers;
 
 /// <summary>
-/// Database controller for API version 2021-11-01.
+/// Database controller for API version 2025-11-01.
 /// Supports: Create (PUT), Get (GET {name}), Delete (DELETE).
 /// </summary>
 [ApiController]
-[ApiVersion("2021-11-01")]
+[ApiVersion("2025-11-01")]
 [Route("subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases")]
 public class DatabasesController : ControllerBase
 {
@@ -24,7 +24,7 @@ public class DatabasesController : ControllerBase
     public ActionResult<DatabaseResource> Get(
         string subscriptionId, string resourceGroupName, string serverName, string databaseName)
     {
-        _logger.LogInformation("GET Database - served by V20211101 controller");
+        _logger.LogInformation("GET Database - served by V20251101 controller");
 
         return Ok(new DatabaseResource
         {
@@ -34,7 +34,7 @@ public class DatabasesController : ControllerBase
             Location = "eastus",
             Properties = new DatabaseProperties
             {
-                Description = "Served by V20211101 controller",
+                Description = "Served by V20251101 controller",
                 Collation = "SQL_Latin1_General_CP1_CI_AS",
                 MaxSizeBytes = 268435456000,
                 Status = "Online",
@@ -48,7 +48,7 @@ public class DatabasesController : ControllerBase
         string subscriptionId, string resourceGroupName, string serverName, string databaseName,
         [FromBody] DatabaseResource request)
     {
-        _logger.LogInformation("PUT Database - served by V20211101 controller");
+        _logger.LogInformation("PUT Database - served by V20251101 controller");
 
         return Ok(new DatabaseResource
         {
@@ -59,7 +59,7 @@ public class DatabasesController : ControllerBase
             Tags = request.Tags,
             Properties = new DatabaseProperties
             {
-                Description = "Served by V20211101 controller",
+                Description = "Served by V20251101 controller",
                 Status = "Creating"
             }
         });
@@ -69,7 +69,7 @@ public class DatabasesController : ControllerBase
     public IActionResult Delete(
         string subscriptionId, string resourceGroupName, string serverName, string databaseName)
     {
-        _logger.LogInformation("DELETE Database - served by V20211101 controller");
-        return Ok(new { description = "Served by V20211101 controller" });
+        _logger.LogInformation("DELETE Database - served by V20251101 controller");
+        return Ok(new { description = "Served by V20251101 controller" });
     }
 }

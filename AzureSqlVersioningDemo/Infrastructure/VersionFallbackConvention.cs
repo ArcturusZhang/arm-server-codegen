@@ -17,9 +17,9 @@ namespace AzureSqlVersioningDemo.Infrastructure;
 /// 
 /// This eliminates the need to duplicate unchanged actions across version controllers.
 /// 
-/// Example: If V20211101 has DELETE but V20250801 doesn't, the convention registers
-/// V20211101's DELETE to also handle api-version "2025-08-01", while GET and PUT
-/// remain mapped only to "2021-11-01" (since V20250801 has its own GET and PUT).
+/// Example: If V20251101 has DELETE but V20251201 doesn't, the convention registers
+/// V20251101's DELETE to also handle api-version "2025-12-01", while GET and PUT
+/// remain mapped only to "2025-11-01" (since V20251201 has its own GET and PUT).
 /// 
 /// Rules:
 /// - Stable versions only fall back to stable versions.

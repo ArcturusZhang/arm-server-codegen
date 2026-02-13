@@ -1,4 +1,4 @@
-namespace AzureSqlVersioningDemo.V20211201.Models;
+namespace AzureSqlVersioningDemo.V20251101.Models;
 
 public class DatabaseProperties
 {

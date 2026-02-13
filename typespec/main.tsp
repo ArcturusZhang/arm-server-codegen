@@ -21,13 +21,13 @@ namespace Microsoft.Sql;
 
 /** Supported API versions. */
 enum Versions {
-  /** Initial stable version (2021-11-01). Create, Get, Delete only. */
+  /** Initial stable version (2025-11-01). Create, Get, Delete only. */
   @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)
-  v2021_11_01: "2021-11-01",
+  v2025_11_01: "2025-11-01",
 
-  /** Second stable version (2021-12-01). Adds List and Update operations. */
+  /** Second stable version (2025-12-01). Adds List and Update operations. */
   @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)
-  v2021_12_01: "2021-12-01",
+  v2025_12_01: "2025-12-01",
 
   /** Latest stable version (2026-02-01). Adds ElasticPoolId property. */
   @armCommonTypesVersion(Azure.ResourceManager.CommonTypes.Versions.v5)
@@ -112,12 +112,12 @@ interface Databases {
   /** Deletes a database (long-running operation). */
   delete is ArmResourceDeleteWithoutOkAsync<Database>;
 
-  /** Updates a database. Added in 2021-12-01. */
-  @added(Versions.v2021_12_01)
+  /** Updates a database. Added in 2025-12-01. */
+  @added(Versions.v2025_12_01)
   update is ArmCustomPatchSync<Database, Database>;
 
-  /** Lists databases under a server. Added in 2021-12-01. */
-  @added(Versions.v2021_12_01)
+  /** Lists databases under a server. Added in 2025-12-01. */
+  @added(Versions.v2025_12_01)
   listByResourceGroup is ArmResourceListByParent<Database>;
 }
 
