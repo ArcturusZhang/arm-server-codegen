@@ -18,7 +18,9 @@ namespace Generated.V20251201.Controllers {
             [FromBody]
             Database body,
             CancellationToken cancellationToken
-        );[HttpGet]
+        );
+
+        [HttpGet]
         public abstract async Task<IActionResult> ListByResourceGroup(
             string subscriptionId,
             string resourceGroupName,

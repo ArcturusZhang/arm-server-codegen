@@ -25,6 +25,7 @@ export async function $onEmit(context: EmitContext<ServerEmitterOptions>) {
 
   // Collect models from the snapshot
   const models = Array.from(report.snapshot.models.values());
+  const generatedModelNames = new Set(models.map((m) => m.model.name));
 
   // Determine the route from the first impacted operation's interface
   const route = getResourceRoute();
@@ -38,7 +39,11 @@ export async function $onEmit(context: EmitContext<ServerEmitterOptions>) {
       <ImpactAnalysisReport report={report} />
       <SourceDirectory path="Models">
         {models.map((m) => (
-          <ModelFile model={m.model} namespace={modelsNamespace} />
+          <ModelFile
+            model={m.model}
+            namespace={modelsNamespace}
+            generatedModels={generatedModelNames}
+          />
         ))}
       </SourceDirectory>
       <SourceDirectory path="Controllers">

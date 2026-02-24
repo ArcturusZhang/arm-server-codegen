@@ -16,7 +16,9 @@ namespace Generated.V20251101.Controllers {
             string resourceGroupName,
             string databaseName,
             CancellationToken cancellationToken
-        );[HttpPut("{databaseName}")]
+        );
+
+        [HttpPut("{databaseName}")]
         public abstract async Task<IActionResult> CreateOrUpdate(
             string subscriptionId,
             string resourceGroupName,
@@ -24,7 +26,9 @@ namespace Generated.V20251101.Controllers {
             [FromBody]
             Database body,
             CancellationToken cancellationToken
-        );[HttpDelete("{databaseName}")]
+        );
+
+        [HttpDelete("{databaseName}")]
         public abstract async Task<IActionResult> Delete(
             string subscriptionId,
             string resourceGroupName,

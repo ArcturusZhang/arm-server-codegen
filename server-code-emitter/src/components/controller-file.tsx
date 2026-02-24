@@ -1,7 +1,7 @@
 import * as cs from "@alloy-js/csharp";
 import Threading from "@alloy-js/csharp/global/System/Threading";
 import Tasks from "@alloy-js/csharp/global/System/Threading/Tasks";
-import { code, Children } from "@alloy-js/core";
+import { code, Children, For } from "@alloy-js/core";
 import { Operation, Program } from "@typespec/compiler";
 import { getHttpOperation } from "@typespec/http";
 import { Mvc, AspVersioning } from "../lib/aspnet.js";
@@ -52,11 +52,16 @@ export function ControllerFile(props: ControllerFileProps): Children {
             },
           ]}
         >
-          {impactedOperations
-            .filter((op) => op.operation !== undefined)
-            .map((op) => (
+          <For
+            each={impactedOperations.filter(
+              (op) => op.operation !== undefined,
+            )}
+            doubleHardline
+          >
+            {(op) => (
               <ControllerMethod operation={op.operation!} program={program} />
-            ))}
+            )}
+          </For>
         </cs.ClassDeclaration>
       </cs.Namespace>
     </cs.SourceFile>

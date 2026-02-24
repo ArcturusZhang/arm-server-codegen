@@ -4,7 +4,7 @@ namespace Generated.V20251201.Models {
     /// <summary>
     /// A SQL Database resource.
     /// </summary>
-    public class Database : <Unresolved Symbol: refkey[sSymbol(emitter-framework:csharp)⁣o3]>
+    public class Database : TrackedResource
     {
         /// <summary>
         /// The resource-specific properties for this resource.
