@@ -1,6 +1,10 @@
+import type { Operation, Model } from "@typespec/compiler";
+
 export interface OperationImpact {
   operationName: string;
   reason: string;
+  /** The operation instance from the current version's type graph. Undefined for removed operations. */
+  operation?: Operation;
 }
 
 export interface VersionImpactReport {
@@ -19,9 +23,11 @@ export interface VersionSnapshot {
 export interface OperationSnapshot {
   name: string;
   fingerprint: string;
+  operation: Operation;
 }
 
 export interface ModelSnapshot {
   name: string;
   fingerprint: string;
+  model: Model;
 }

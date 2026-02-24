@@ -15,6 +15,7 @@ export function extractSnapshot(ns: Namespace): VersionSnapshot {
       operations.push({
         name: `${iface.name}.${op.name}`,
         fingerprint: fingerprintOperation(op),
+        operation: op,
       });
     }
   }
@@ -23,6 +24,7 @@ export function extractSnapshot(ns: Namespace): VersionSnapshot {
     operations.push({
       name: op.name,
       fingerprint: fingerprintOperation(op),
+      operation: op,
     });
   }
 
@@ -30,6 +32,7 @@ export function extractSnapshot(ns: Namespace): VersionSnapshot {
     models.set(model.name, {
       name: model.name,
       fingerprint: fingerprintModel(model),
+      model: model,
     });
   }
 
@@ -50,11 +53,13 @@ export function diffSnapshots(
       impacts.push({
         operationName: name,
         reason: "new operation (not present in previous version)",
+        operation: currOp.operation,
       });
     } else if (prevOp.fingerprint !== currOp.fingerprint) {
       impacts.push({
         operationName: name,
         reason: `signature changed:\n      prev: ${prevOp.fingerprint}\n      curr: ${currOp.fingerprint}`,
+        operation: currOp.operation,
       });
     }
   }

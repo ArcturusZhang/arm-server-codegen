@@ -53,6 +53,7 @@ export function analyzeVersionImpact(program: Program, targetVersion: string): V
       impactedOperations: currentSnapshot.operations.map((op) => ({
         operationName: op.name,
         reason: "first version — all operations included",
+        operation: op.operation,
       })),
       allOperations: currentSnapshot.operations.map((op) => op.name),
     };
