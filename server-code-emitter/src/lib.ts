@@ -1,15 +1,19 @@
-import { createTypeSpecLibrary, JSONSchemaType, paramMessage } from "@typespec/compiler";
+import {
+  createTypeSpecLibrary,
+  JSONSchemaType,
+  paramMessage,
+} from "@typespec/compiler";
 
 export interface ServerEmitterOptions {
   /** The API version to analyze (e.g. "2024-06-01"). Compares against its previous version. */
-  "version": string;
+  version: string;
 }
 
 const EmitterOptionsSchema: JSONSchemaType<ServerEmitterOptions> = {
   type: "object",
   additionalProperties: false,
   properties: {
-    "version": { type: "string" },
+    version: { type: "string" },
   },
   required: ["version"],
 };

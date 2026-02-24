@@ -1,10 +1,10 @@
-import {
-  Model,
-  Namespace,
-  Operation,
-  Type,
-} from "@typespec/compiler";
-import type { VersionSnapshot, OperationSnapshot, ModelSnapshot, OperationImpact } from "./types.js";
+import { Model, Namespace, Operation, Type } from "@typespec/compiler";
+import type {
+  VersionSnapshot,
+  OperationSnapshot,
+  ModelSnapshot,
+  OperationImpact,
+} from "./types.js";
 
 export function extractSnapshot(ns: Namespace): VersionSnapshot {
   const operations: OperationSnapshot[] = [];
@@ -41,7 +41,7 @@ export function extractSnapshot(ns: Namespace): VersionSnapshot {
 
 export function diffSnapshots(
   prev: VersionSnapshot,
-  curr: VersionSnapshot
+  curr: VersionSnapshot,
 ): OperationImpact[] {
   const impacts: OperationImpact[] = [];
   const prevOpMap = new Map(prev.operations.map((o) => [o.name, o]));
@@ -88,7 +88,9 @@ function fingerprintModel(model: Model, seen: Set<Type> = new Set()): string {
   seen.add(model);
   const props: string[] = [];
   for (const [name, prop] of model.properties) {
-    props.push(`${name}${prop.optional ? "?" : ""}: ${fingerprintType(prop.type, seen)}`);
+    props.push(
+      `${name}${prop.optional ? "?" : ""}: ${fingerprintType(prop.type, seen)}`,
+    );
   }
   seen.delete(model);
   return `{ ${props.join(", ")} }`;
@@ -102,7 +104,11 @@ function fingerprintType(type: Type, seen: Set<Type> = new Set()): string {
       if (type.indexer && type.name === "Array") {
         return `${fingerprintType(type.indexer.value, seen)}[]`;
       }
-      if (type.name && type.name !== "" && !type.name.startsWith("(anonymous")) {
+      if (
+        type.name &&
+        type.name !== "" &&
+        !type.name.startsWith("(anonymous")
+      ) {
         return `${type.name}${fingerprintModel(type, seen)}`;
       }
       return fingerprintModel(type, seen);
