@@ -27,19 +27,6 @@ The TypeSpec specification becomes the single source of truth. The emitter under
 | **Breaking change detection** | Caught at compile time, before code is generated or deployed |
 | **Reduced boilerplate** | Focus on business logic; routing, models, and controller scaffolding are generated |
 
-### What Changes and What Stays the Same
-
-| Aspect | Today (Manual) | With TypeSpec (Generated) |
-|--------|---------------|--------------------------|
-| **API contract definition** | Implicitly defined by controller code and models | Explicitly defined in TypeSpec spec |
-| **Version registry** | Hand-written | Generated from TypeSpec `@versioned` enum |
-| **Identifying impacted operations** | Manual analysis by developers | Automatic — the emitter compares versions using `@added`, `@removed`, etc. |
-| **Controller code for new versions** | Hand-written per impacted operation | Generated abstract base classes with versioning attributes |
-| **Models and validation** | Hand-written classes | Generated from TypeSpec models |
-| **Routing framework** | Unchanged | Unchanged — same version-aware routing |
-| **Business logic** | Hand-written | Hand-written (in concrete class inheriting from generated base) |
-| **Project structure (version directories)** | Unchanged | Unchanged — emitter outputs the same directory layout |
-
 ---
 
 ## The Incremental Versioning Pattern
