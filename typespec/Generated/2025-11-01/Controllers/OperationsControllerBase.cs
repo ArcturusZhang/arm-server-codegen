@@ -1,0 +1,16 @@
+using Asp.Versioning;
+using Microsoft.AspNetCore.Mvc;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace Generated.V20251101.Controllers {
+    [ApiController]
+    [ApiVersion("2025-11-01")]
+    [Route(
+        "subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases")]
+    public abstract class OperationsControllerBase : ControllerBase
+    {
+        [HttpGet]
+        public abstract async Task<IActionResult> List(CancellationToken cancellationToken);
+    }
+}

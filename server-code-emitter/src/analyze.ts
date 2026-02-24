@@ -51,6 +51,7 @@ export function analyzeVersionImpact(
         operation: op.operation,
       })),
       allOperations: currentSnapshot.operations.map((op) => op.name),
+      snapshot: currentSnapshot,
     };
   }
 
@@ -68,6 +69,7 @@ export function analyzeVersionImpact(
     isFirstVersion: false,
     impactedOperations: impacted,
     allOperations: currentSnapshot.operations.map((op) => op.name),
+    snapshot: currentSnapshot,
   };
 }
 

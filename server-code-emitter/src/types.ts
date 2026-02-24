@@ -13,6 +13,8 @@ export interface VersionImpactReport {
   isFirstVersion: boolean;
   impactedOperations: OperationImpact[];
   allOperations: string[];
+  /** The snapshot of the current version's type graph, for code generation. */
+  snapshot: VersionSnapshot;
 }
 
 export interface VersionSnapshot {
