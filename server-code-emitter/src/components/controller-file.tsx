@@ -1,8 +1,9 @@
 import * as cs from "@alloy-js/csharp";
+import Threading from "@alloy-js/csharp/global/System/Threading";
+import Tasks from "@alloy-js/csharp/global/System/Threading/Tasks";
 import { code, Children } from "@alloy-js/core";
 import { Operation, Program } from "@typespec/compiler";
 import { getHttpOperation } from "@typespec/http";
-import { TypeExpression } from "@typespec/emitter-framework/csharp";
 import type { OperationImpact } from "../types.js";
 
 export interface ControllerFileProps {
@@ -36,12 +37,7 @@ export function ControllerFile(props: ControllerFileProps): Children {
   return (
     <cs.SourceFile
       path={`${className}.cs`}
-      using={[
-        "System.Threading",
-        "System.Threading.Tasks",
-        "Asp.Versioning",
-        "Microsoft.AspNetCore.Mvc",
-      ]}
+      using={["Asp.Versioning", "Microsoft.AspNetCore.Mvc"]}
     >
       <cs.Namespace name={namespace}>
         <cs.ClassDeclaration
@@ -97,7 +93,7 @@ function ControllerMethod(props: ControllerMethodProps): Children {
       abstract
       async
       name={methodName}
-      returns="Task<IActionResult>"
+      returns={code`${Tasks.Task}<IActionResult>`}
       attributes={[{ name: httpAttribute, args: attrArgs }]}
       parameters={params}
     />
@@ -163,7 +159,7 @@ function buildMethodParameters(
   // Add CancellationToken
   params.push({
     name: "cancellationToken",
-    type: "CancellationToken",
+    type: code`${Threading.CancellationToken}`,
   });
 
   return params;
