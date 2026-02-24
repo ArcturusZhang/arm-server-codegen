@@ -1,4 +1,4 @@
-import { EmitContext } from "@typespec/compiler";
+import { EmitContext, Enum, Model, Union } from "@typespec/compiler";
 import { SourceDirectory } from "@alloy-js/core";
 import { Output, writeOutput } from "@typespec/emitter-framework";
 import type { ServerEmitterOptions } from "./lib.js";
@@ -6,6 +6,8 @@ import { analyzeVersionImpact } from "./analyze.js";
 import { ImpactAnalysisReport } from "./report.js";
 import { ModelFile } from "./components/model-file.js";
 import { ControllerFile } from "./components/controller-file.js";
+import { EnumFile } from "./components/enum-file.js";
+import type { ModelSnapshot } from "./types.js";
 
 import { $lib } from "./lib.js";
 export { $lib } from "./lib.js";
@@ -23,9 +25,17 @@ export async function $onEmit(context: EmitContext<ServerEmitterOptions>) {
   const modelsNamespace = `Generated.V${versionTag}.Models`;
   const controllersNamespace = `Generated.V${versionTag}.Controllers`;
 
-  // Collect models from the snapshot
-  const models = Array.from(report.snapshot.models.values());
-  const generatedModelNames = new Set(models.map((m) => m.model.name));
+  // Collect models and enums/unions from the full dependency tree
+  const { models, enums } = collectTypeDependencies(report.snapshot.models);
+
+  // Close extensible unions by removing the open scalar variant so the
+  // emitter-framework can represent them as enums. We mutate the projected
+  // union (safe — it's a versioned copy) to preserve object identity for refkeys.
+  for (const e of enums) {
+    if (e.kind === "Union") {
+      closeExtensibleUnion(e);
+    }
+  }
 
   // Determine the route from the first impacted operation's interface
   const route = getResourceRoute();
@@ -39,11 +49,10 @@ export async function $onEmit(context: EmitContext<ServerEmitterOptions>) {
       <ImpactAnalysisReport report={report} />
       <SourceDirectory path="Models">
         {models.map((m) => (
-          <ModelFile
-            model={m.model}
-            namespace={modelsNamespace}
-            generatedModels={generatedModelNames}
-          />
+          <ModelFile model={m} namespace={modelsNamespace} />
+        ))}
+        {enums.map((e) => (
+          <EnumFile type={e} namespace={modelsNamespace} />
         ))}
       </SourceDirectory>
       <SourceDirectory path="Controllers">
@@ -80,4 +89,72 @@ function getImpactedInterfaceNames(report: {
     }
   }
   return Array.from(names);
+}
+
+/**
+ * Walk the full type dependency tree for every snapshot model, collecting
+ * base types, property model types, and union/enum types referenced by properties.
+ */
+function collectTypeDependencies(snapshotModels: Map<string, ModelSnapshot>): {
+  models: Model[];
+  enums: (Union | Enum)[];
+} {
+  const collectedModels = new Map<string, Model>();
+  const collectedEnums = new Map<string, Union | Enum>();
+  for (const snapshot of snapshotModels.values()) {
+    walkModelDeps(snapshot.model, collectedModels, collectedEnums);
+  }
+  return {
+    models: Array.from(collectedModels.values()),
+    enums: Array.from(collectedEnums.values()),
+  };
+}
+
+function walkModelDeps(
+  model: Model,
+  collectedModels: Map<string, Model>,
+  collectedEnums: Map<string, Union | Enum>,
+): void {
+  if (collectedModels.has(model.name)) return;
+  collectedModels.set(model.name, model);
+  if (model.baseModel) {
+    walkModelDeps(model.baseModel, collectedModels, collectedEnums);
+  }
+  for (const [, prop] of model.properties) {
+    if (prop.type.kind === "Model" && prop.type.name) {
+      // Skip collection types (Record/Array) — they map to built-in C# types
+      if (!prop.type.indexer) {
+        walkModelDeps(prop.type, collectedModels, collectedEnums);
+      }
+    } else if (prop.type.kind === "Union" && prop.type.name) {
+      if (hasStringLiteralVariants(prop.type)) {
+        collectedEnums.set(prop.type.name, prop.type);
+      }
+    } else if (prop.type.kind === "Enum" && prop.type.name) {
+      collectedEnums.set(prop.type.name, prop.type);
+    }
+  }
+}
+
+/** A union has enum-representable content if it contains at least one string literal variant. */
+function hasStringLiteralVariants(union: Union): boolean {
+  for (const [, variant] of union.variants) {
+    if (variant.type.kind === "String") {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Remove the open `string` scalar variant from an extensible union,
+ * making it representable as a C# enum. Mutates the union in place
+ * to preserve object identity for the refkey system.
+ */
+function closeExtensibleUnion(union: Union): void {
+  for (const [key, variant] of union.variants) {
+    if (variant.type.kind !== "String") {
+      union.variants.delete(key);
+    }
+  }
 }

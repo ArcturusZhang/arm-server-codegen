@@ -1,3 +1,5 @@
+using Generated.V20251201.Models;
+
 namespace Generated.V20251201.Models {
     /// <summary>
     /// Database resource properties.
@@ -27,6 +29,6 @@ namespace Generated.V20251201.Models {
         /// <summary>
         /// The provisioning state.
         /// </summary>
-        public <Unresolved Symbol: refkey[sSymbol(emitter-framework:csharp)⁣o1]>? provisioningState { get; set; }
+        public ProvisioningState? provisioningState { get; set; }
     }
 }
