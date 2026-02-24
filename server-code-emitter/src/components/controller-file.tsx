@@ -4,6 +4,7 @@ import Tasks from "@alloy-js/csharp/global/System/Threading/Tasks";
 import { code, Children } from "@alloy-js/core";
 import { Operation, Program } from "@typespec/compiler";
 import { getHttpOperation } from "@typespec/http";
+import { Mvc, AspVersioning } from "../lib/aspnet.js";
 import type { OperationImpact } from "../types.js";
 
 export interface ControllerFileProps {
@@ -15,13 +16,13 @@ export interface ControllerFileProps {
   route: string;
 }
 
-const httpVerbToAttribute: Record<string, string> = {
-  get: "HttpGet",
-  put: "HttpPut",
-  post: "HttpPost",
-  patch: "HttpPatch",
-  delete: "HttpDelete",
-};
+const httpVerbToAttribute = {
+  get: Mvc.HttpGetAttribute,
+  put: Mvc.HttpPutAttribute,
+  post: Mvc.HttpPostAttribute,
+  patch: Mvc.HttpPatchAttribute,
+  delete: Mvc.HttpDeleteAttribute,
+} as const;
 
 export function ControllerFile(props: ControllerFileProps): Children {
   const {
@@ -35,21 +36,18 @@ export function ControllerFile(props: ControllerFileProps): Children {
   const className = `${interfaceName}ControllerBase`;
 
   return (
-    <cs.SourceFile
-      path={`${className}.cs`}
-      using={["Asp.Versioning", "Microsoft.AspNetCore.Mvc"]}
-    >
+    <cs.SourceFile path={`${className}.cs`}>
       <cs.Namespace name={namespace}>
         <cs.ClassDeclaration
           public
           abstract
           name={className}
-          baseType="ControllerBase"
+          baseType={Mvc.ControllerBase}
           attributes={[
-            { name: "ApiController" },
-            { name: "ApiVersion", args: [`"${version}"`] },
+            { name: Mvc.ApiControllerAttribute },
+            { name: AspVersioning.ApiVersionAttribute, args: [`"${version}"`] },
             {
-              name: "Route",
+              name: Mvc.RouteAttribute,
               args: [`"${route}"`],
             },
           ]}
@@ -75,7 +73,9 @@ function ControllerMethod(props: ControllerMethodProps): Children {
   const [httpOp] = getHttpOperation(program, operation);
 
   const verb = httpOp.verb;
-  const httpAttribute = httpVerbToAttribute[verb] ?? "HttpGet";
+  const httpAttribute =
+    httpVerbToAttribute[verb as keyof typeof httpVerbToAttribute] ??
+    Mvc.HttpGetAttribute;
 
   // Build route suffix from the operation's path relative to the resource
   const routeSuffix = getRouteSuffix(httpOp.path);
@@ -93,7 +93,7 @@ function ControllerMethod(props: ControllerMethodProps): Children {
       abstract
       async
       name={methodName}
-      returns={code`${Tasks.Task}<IActionResult>`}
+      returns={code`${Tasks.Task}<${Mvc.IActionResult}>`}
       attributes={[{ name: httpAttribute, args: attrArgs }]}
       parameters={params}
     />
@@ -152,7 +152,7 @@ function buildMethodParameters(
     params.push({
       name: "body",
       type: bodyTypeName,
-      attributes: [{ name: "FromBody" }],
+      attributes: [{ name: Mvc.FromBodyAttribute }],
     });
   }
 
