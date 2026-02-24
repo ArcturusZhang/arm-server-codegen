@@ -9,31 +9,31 @@ namespace Generated.V20260201.Models {
         /// <summary>
         /// The collation of the database.
         /// </summary>
-        public string? collation { get; set; }
+        public string? Collation { get; set; }
 
         /// <summary>
         /// The max size of the database in bytes.
         /// </summary>
-        public long? maxSizeBytes { get; set; }
+        public long? MaxSizeBytes { get; set; }
 
         /// <summary>
         /// The status of the database.
         /// </summary>
-        public string? status { get; set; }
+        public string? Status { get; set; }
 
         /// <summary>
         /// The creation date of the database.
         /// </summary>
-        public DateTimeOffset? creationDate { get; set; }
+        public DateTimeOffset? CreationDate { get; set; }
 
         /// <summary>
         /// The provisioning state.
         /// </summary>
-        public ProvisioningState? provisioningState { get; set; }
+        public ProvisioningState? ProvisioningState { get; set; }
 
         /// <summary>
         /// The resource ID of the elastic pool containing this database.
         /// </summary>
-        public string? elasticPoolId { get; set; }
+        public string? ElasticPoolId { get; set; }
     }
 }

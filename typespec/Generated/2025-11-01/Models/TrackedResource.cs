@@ -9,11 +9,11 @@ namespace Generated.V20251101.Models {
         /// <summary>
         /// Resource tags.
         /// </summary>
-        public IDictionary<string, string>? tags { get; set; }
+        public IDictionary<string, string>? Tags { get; set; }
 
         /// <summary>
         /// The geo-location where the resource lives
         /// </summary>
-        public required string location { get; set; }
+        public required string Location { get; set; }
     }
 }

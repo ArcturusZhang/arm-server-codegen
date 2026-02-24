@@ -9,31 +9,31 @@ namespace Generated.V20251201.Models {
         /// <summary>
         /// The identity that created the resource.
         /// </summary>
-        public string? createdBy { get; set; }
+        public string? CreatedBy { get; set; }
 
         /// <summary>
         /// The type of identity that created the resource.
         /// </summary>
-        public createdByType? createdByType { get; set; }
+        public CreatedByType? CreatedByType { get; set; }
 
         /// <summary>
         /// The timestamp of resource creation (UTC).
         /// </summary>
-        public DateTimeOffset? createdAt { get; set; }
+        public DateTimeOffset? CreatedAt { get; set; }
 
         /// <summary>
         /// The identity that last modified the resource.
         /// </summary>
-        public string? lastModifiedBy { get; set; }
+        public string? LastModifiedBy { get; set; }
 
         /// <summary>
         /// The type of identity that last modified the resource.
         /// </summary>
-        public createdByType? lastModifiedByType { get; set; }
+        public CreatedByType? LastModifiedByType { get; set; }
 
         /// <summary>
         /// The timestamp of resource last modification (UTC)
         /// </summary>
-        public DateTimeOffset? lastModifiedAt { get; set; }
+        public DateTimeOffset? LastModifiedAt { get; set; }
     }
 }

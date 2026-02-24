@@ -9,11 +9,11 @@ namespace Generated.V20251101.Models {
         /// <summary>
         /// The resource-specific properties for this resource.
         /// </summary>
-        public DatabaseProperties? properties { get; set; }
+        public DatabaseProperties? Properties { get; set; }
 
         /// <summary>
         /// The name of the database.
         /// </summary>
-        public new required string name { get; set; }
+        public new required string Name { get; set; }
     }
 }

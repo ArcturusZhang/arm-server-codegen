@@ -1,5 +1,5 @@
 namespace Generated.V20251201.Models {
-    public enum createdByType
+    public enum CreatedByType
     {
         /// <summary>
         /// The entity was created by a user.

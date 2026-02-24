@@ -1,5 +1,6 @@
 import { EmitContext, Enum, Model, Union } from "@typespec/compiler";
 import { SourceDirectory } from "@alloy-js/core";
+import { createCSharpNamePolicy } from "@alloy-js/csharp";
 import { Output, writeOutput } from "@typespec/emitter-framework";
 import type { ServerEmitterOptions } from "./lib.js";
 import { analyzeVersionImpact } from "./analyze.js";
@@ -45,7 +46,7 @@ export async function $onEmit(context: EmitContext<ServerEmitterOptions>) {
 
   await writeOutput(
     context.program,
-    <Output program={context.program}>
+    <Output program={context.program} namePolicy={createCSharpNamePolicy()}>
       <ImpactAnalysisReport report={report} />
       <SourceDirectory path="Models">
         {models.map((m) => (
