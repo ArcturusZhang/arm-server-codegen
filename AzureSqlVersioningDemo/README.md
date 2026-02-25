@@ -2,7 +2,7 @@
 
 A standalone ASP.NET Core 10 project demonstrating how Azure SQL's API version routing works using `Asp.Versioning.Mvc`. It shows how incremental versioning with a **fallback convention** lets you only implement the operations that changed in each version — unchanged operations are automatically served by the previous version's controller.
 
-Each controller response includes a `description` field inside `properties` (e.g. `"Served by V20251101 controller"`) so you can verify exactly which controller handled the request.
+All controllers share an in-memory `DatabaseStore` — a `ConcurrentDictionary`-backed singleton — so CRUD operations work across versions with real state. A database created via V1 is visible via V3 (with the additional `ElasticPoolId` field), and vice versa. Each version's controller exposes only the properties defined in that version's model.
 
 ## How It Works
 
@@ -31,6 +31,14 @@ DELETE     ?api-version=2026-02-01  →  V20251101.Delete (fallback)
 - Preview versions can fall back to both preview and stable versions
 - Uses per-action `MapToApiVersion` to avoid ambiguous route matches
 
+### In-Memory Database Store
+
+The `DatabaseStore` (in `Infrastructure/`) provides:
+- **Shared state** — all versions read/write the same `ConcurrentDictionary<string, DatabaseEntity>`
+- **Canonical entity** — `DatabaseEntity` is the superset of all properties across all versions
+- **Version-specific views** — each controller's `ToResource()` maps to its version's model, omitting properties not defined in that version
+- **CRUD operations** — PUT (create/update, 201/200), GET (200/404), PATCH (merge non-null fields, 404), DELETE (200/404), LIST
+
 ### Version Evolution
 
 The demo uses three API versions with a simple, incremental evolution:
@@ -54,14 +62,15 @@ The demo uses three API versions with a simple, incremental evolution:
 ```
 AzureSqlVersioningDemo/
 ├── Infrastructure/
-│   └── VersionFallbackConvention.cs    # Azure SQL-style version fallback (IControllerConvention)
-├── V20251101/                          # API version 2025-11-01
+│   ├── DatabaseStore.cs                     # In-memory store (ConcurrentDictionary singleton)
+│   └── VersionFallbackConvention.cs         # Azure SQL-style version fallback (IControllerConvention)
+├── V20251101/                               # API version 2025-11-01
 │   ├── Controllers/DatabasesController.cs   # Create, Get, Delete
 │   └── Models/Database.cs
-├── V20251201/                          # API version 2025-12-01
+├── V20251201/                               # API version 2025-12-01
 │   ├── Controllers/DatabasesController.cs   # List, Update (new operations only)
 │   └── Models/Database.cs
-├── V20260201/                          # API version 2026-02-01
+├── V20260201/                               # API version 2026-02-01
 │   ├── Controllers/DatabasesController.cs   # Create, Get, Update (impacted by new property)
 │   └── Models/Database.cs                   # Adds ElasticPoolId
 ├── Program.cs
@@ -82,101 +91,32 @@ dotnet run
 
 The server starts on `http://localhost:5188`.
 
-## Testing Version Routing
+## Testing
 
-### Direct routing — operation exists in requested version
+Use the companion client project (`AzureSqlVersioningDemo.Client`) to exercise all CRUD operations across versions. See the [client README](../AzureSqlVersioningDemo.Client/README.md) for details.
+
+Or test manually with curl:
 
 ```bash
-# Get (V1 — direct)
+# Create a database via V1
+curl -X PUT "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/databases/mydb?api-version=2025-11-01" \
+  -H "Content-Type: application/json" \
+  -d '{"location":"eastus","properties":{"collation":"SQL_Latin1_General_CP1_CI_AS","maxSizeBytes":268435456000}}'
+
+# Get via V1 (no ElasticPoolId)
 curl "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/databases/mydb?api-version=2025-11-01"
-```
-```json
-{
-  "properties": {
-    "description": "Served by V20251101 controller",
-    "collation": "SQL_Latin1_General_CP1_CI_AS",
-    "status": "Online"
-  }
-}
-```
 
-### Fallback routing — operation falls back to an earlier version
-
-```bash
-# Get with V2 — V20251201 has no Get, falls back to V20251101
-curl "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/databases/mydb?api-version=2025-12-01"
-```
-```json
-{
-  "properties": {
-    "description": "Served by V20251101 controller",
-    "status": "Online"
-  }
-}
-```
-Note: The `description` confirms V20251101 handled the request even though V2 was requested.
-
-### New operations added in V2
-
-```bash
-# List (new in V2)
-curl "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/databases?api-version=2025-12-01"
-```
-```json
-[{
-  "properties": {
-    "description": "Served by V20251201 controller",
-    "status": "Online"
-  }
-}]
-```
-
-```bash
-# Update (new in V2)
-curl -X PATCH "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/databases/mydb?api-version=2025-12-01" \
-  -H "Content-Type: application/json" -d '{"properties":{"collation":"Latin1_General_100_CI_AS"}}'
-```
-```json
-{
-  "properties": {
-    "description": "Served by V20251201 controller",
-    "collation": "Latin1_General_100_CI_AS",
-    "status": "Online"
-  }
-}
-```
-
-### V3 reimplements impacted operations (new property)
-
-```bash
-# Get with V3 — reimplemented, returns elasticPoolId
+# Get via V3 (includes ElasticPoolId field)
 curl "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/databases/mydb?api-version=2026-02-01"
+
+# List via V2
+curl "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/databases?api-version=2025-12-01"
+
+# Patch via V3 (set ElasticPoolId)
+curl -X PATCH "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/databases/mydb?api-version=2026-02-01" \
+  -H "Content-Type: application/json" \
+  -d '{"properties":{"elasticPoolId":"/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/elasticPools/pool1"}}'
+
+# Delete
+curl -X DELETE "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/databases/mydb?api-version=2025-11-01"
 ```
-```json
-{
-  "properties": {
-    "description": "Served by V20260201 controller",
-    "status": "Online",
-    "elasticPoolId": "/subscriptions/sub1/.../elasticPools/pool1"
-  }
-}
-```
-
-### V3 fallback chains
-
-```bash
-# Delete with V3 — falls back to V1
-curl -X DELETE "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/databases/mydb?api-version=2026-02-01"
-# → { "description": "Served by V20251101 controller" }
-
-# List with V3 — falls back to V2
-curl "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/databases?api-version=2026-02-01"
-# → description: "Served by V20251201 controller"
-```
-
-## Adding a New API Version
-
-1. Create a new version directory (e.g., `V20260201/`)
-2. **Only implement operations that changed** — everything else falls back automatically
-3. Set `Description = "Served by V20260201 controller"` in responses for verification
-4. Build and run — the new version is routed automatically
