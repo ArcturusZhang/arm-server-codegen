@@ -40,7 +40,7 @@ namespace Generated.V20260201.Controllers {
             string resourceGroupName,
             string databaseName,
             [FromBody]
-            Database body,
+            ResourceUpdateModel body,
             CancellationToken cancellationToken
         );
 

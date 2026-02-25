@@ -38,7 +38,7 @@ public class DatabasesController : ControllerBase
     [HttpPatch("{databaseName}")]
     public ActionResult<DatabaseResource> Update(
         string subscriptionId, string resourceGroupName, string databaseName,
-        [FromBody] DatabaseResource request)
+        [FromBody] DatabaseUpdate request)
     {
         _logger.LogInformation("PATCH Database - served by V20251201 controller");
 
@@ -47,7 +47,6 @@ public class DatabasesController : ControllerBase
         {
             Id = DatabaseStore.BuildResourceId(subscriptionId, resourceGroupName, databaseName),
             Name = databaseName,
-            Location = request.Location,
             Tags = request.Tags,
             Collation = request.Properties?.Collation,
             MaxSizeBytes = request.Properties?.MaxSizeBytes,

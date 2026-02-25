@@ -23,6 +23,7 @@ Console.WriteLine("── Step 1: Create two databases via V1 (2025-11-01) ─�
 
 var db1 = new DatabaseResource
 {
+    Name = "mydb",
     Location = "eastus",
     Properties = new DatabaseProperties
     {
@@ -35,6 +36,7 @@ Print("Created mydb", created1);
 
 var db2 = new DatabaseResource
 {
+    Name = "testdb",
     Location = "westus",
     Properties = new DatabaseProperties { Collation = "Latin1_General_100_CI_AS" }
 };

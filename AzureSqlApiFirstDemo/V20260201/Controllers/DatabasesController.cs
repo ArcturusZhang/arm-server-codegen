@@ -66,7 +66,7 @@ public class DatabasesController : DatabasesControllerBase
 
     public override Task<IActionResult> Update(
         string subscriptionId, string resourceGroupName, string databaseName,
-        Database body, CancellationToken cancellationToken)
+        ResourceUpdateModel body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("PATCH Database - served by V20260201 controller");
 
@@ -75,7 +75,6 @@ public class DatabasesController : DatabasesControllerBase
         {
             Id = DatabaseStore.BuildResourceId(subscriptionId, resourceGroupName, databaseName),
             Name = databaseName,
-            Location = body.Location,
             Tags = body.Tags?.ToDictionary(kv => kv.Key, kv => kv.Value),
             Collation = body.Properties?.Collation,
             MaxSizeBytes = body.Properties?.MaxSizeBytes,

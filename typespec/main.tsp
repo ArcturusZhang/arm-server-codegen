@@ -114,7 +114,13 @@ interface Databases {
 
   /** Updates a database. Added in 2025-12-01. */
   @added(Versions.v2025_12_01)
-  update is ArmCustomPatchSync<Database, Database>;
+  update is ArmCustomPatchSync<
+    Database,
+    Azure.ResourceManager.Foundations.ResourceUpdateModel<
+      Database,
+      DatabaseProperties
+    >
+  >;
 
   /** Lists databases under a server. Added in 2025-12-01. */
   @added(Versions.v2025_12_01)

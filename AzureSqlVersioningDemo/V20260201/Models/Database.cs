@@ -18,3 +18,16 @@ public class DatabaseResource
     public Dictionary<string, string>? Tags { get; set; }
     public DatabaseProperties? Properties { get; set; }
 }
+
+public class DatabaseUpdateProperties
+{
+    public string? Collation { get; set; }
+    public long? MaxSizeBytes { get; set; }
+    public string? ElasticPoolId { get; set; }
+}
+
+public class DatabaseUpdate
+{
+    public Dictionary<string, string>? Tags { get; set; }
+    public DatabaseUpdateProperties? Properties { get; set; }
+}
