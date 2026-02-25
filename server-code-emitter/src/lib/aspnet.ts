@@ -94,6 +94,16 @@ export const Mvc = createLibrary("Microsoft.AspNetCore.Mvc", {
     },
     isSealed: true,
   },
+  FromHeaderAttribute: {
+    kind: "class",
+    members: {
+      FromHeaderAttribute: {
+        kind: "method",
+        methodKind: "constructor" as const,
+      },
+    },
+    isSealed: true,
+  },
 });
 
 /**

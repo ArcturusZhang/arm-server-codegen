@@ -121,29 +121,36 @@ const excludedParams = new Set(["api-version", "apiVersion"]);
 function buildMethodParameters(
   httpOp: ReturnType<typeof getHttpOperation>[0],
 ): cs.ParameterProps[] {
-  const params: cs.ParameterProps[] = [];
+  const pathParams: cs.ParameterProps[] = [];
+  const queryParams: cs.ParameterProps[] = [];
+  const headerParams: cs.ParameterProps[] = [];
 
-  // Add path parameters
+  // Classify parameters by location in a single pass
   for (const param of httpOp.parameters.parameters) {
     if (excludedParams.has(param.name)) continue;
-    if (param.type === "path") {
-      params.push({
-        name: param.name,
-        type: "string",
-      });
+    switch (param.type) {
+      case "path":
+        pathParams.push({ name: param.name, type: "string" });
+        break;
+      case "query":
+        queryParams.push({ name: param.name, type: "string" });
+        break;
+      case "header":
+        headerParams.push({
+          name: param.name,
+          type: "string",
+          attributes: [{ name: Mvc.FromHeaderAttribute }],
+        });
+        break;
     }
   }
 
-  // Add query parameters
-  for (const param of httpOp.parameters.parameters) {
-    if (excludedParams.has(param.name)) continue;
-    if (param.type === "query") {
-      params.push({
-        name: param.name,
-        type: "string",
-      });
-    }
-  }
+  // Assemble in order: path, query, header, body, cancellationToken
+  const params: cs.ParameterProps[] = [
+    ...pathParams,
+    ...queryParams,
+    ...headerParams,
+  ];
 
   // Add body parameter if present
   if (httpOp.parameters.body) {
