@@ -3,7 +3,7 @@ import { Children } from "@alloy-js/core";
 import { EnumDeclaration } from "@typespec/emitter-framework/csharp";
 import { Enum, Union } from "@typespec/compiler";
 import { pascalCase } from "change-case";
-import { SourceFile } from "./source-file.js";
+import { ServerCodeSourceFile } from "./source-file.js";
 
 export interface EnumFileProps {
   type: Union | Enum;
@@ -14,10 +14,10 @@ export function EnumFile(props: EnumFileProps): Children {
   const { type, namespace } = props;
 
   return (
-    <SourceFile path={`${pascalCase(type.name!)}.cs`}>
+    <ServerCodeSourceFile path={`${pascalCase(type.name!)}.cs`}>
       <cs.Namespace name={namespace}>
         <EnumDeclaration type={type} public />
       </cs.Namespace>
-    </SourceFile>
+    </ServerCodeSourceFile>
   );
 }

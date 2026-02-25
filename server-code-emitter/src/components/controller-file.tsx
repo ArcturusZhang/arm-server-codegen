@@ -5,7 +5,7 @@ import { code, Children, For } from "@alloy-js/core";
 import { Operation, Program } from "@typespec/compiler";
 import { getHttpOperation } from "@typespec/http";
 import { Mvc, AspVersioning } from "../lib/aspnet.js";
-import { SourceFile } from "./source-file.js";
+import { ServerCodeSourceFile } from "./source-file.js";
 import type { OperationImpact } from "../types.js";
 
 export interface ControllerFileProps {
@@ -37,7 +37,7 @@ export function ControllerFile(props: ControllerFileProps): Children {
   const className = `${interfaceName}ControllerBase`;
 
   return (
-    <SourceFile path={`${className}.cs`}>
+    <ServerCodeSourceFile path={`${className}.cs`}>
       <cs.Namespace name={namespace}>
         <cs.ClassDeclaration
           public
@@ -65,7 +65,7 @@ export function ControllerFile(props: ControllerFileProps): Children {
           </For>
         </cs.ClassDeclaration>
       </cs.Namespace>
-    </SourceFile>
+    </ServerCodeSourceFile>
   );
 }
 
