@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="AzureSqlVersioningDemo/AzureSqlVersioningDemo.csproj" />
+  <Project Path="AzureSqlVersioningDemo.Client/AzureSqlVersioningDemo.Client.csproj" />
+</Solution>
