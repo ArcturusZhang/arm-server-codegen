@@ -87,6 +87,12 @@ public class VersionFallbackConvention : IControllerConvention
                 .Select(s => s.AttributeRouteModel?.Template)
                 .FirstOrDefault(t => t != null);
 
+            if (routeTemplate == null)
+            {
+                // No class-level route — derive from action routes (per-method routing)
+                routeTemplate = DeriveCollectionRoute(controller);
+            }
+
             if (routeTemplate == null) continue;
 
             controllerInfos.Add(new ControllerVersionInfo
@@ -174,6 +180,37 @@ public class VersionFallbackConvention : IControllerConvention
     private static string NormalizeRouteTemplate(string template)
     {
         return System.Text.RegularExpressions.Regex.Replace(template, @"\{[^}]+\}", "{}");
+    }
+
+    /// <summary>
+    /// Derives a "virtual" class-level route from per-method action routes.
+    /// Finds the resource collection path by using the shortest action route
+    /// or stripping the last parameter segment from single-resource routes.
+    /// </summary>
+    private static string? DeriveCollectionRoute(ControllerModel controller)
+    {
+        var actionRoutes = controller.Actions
+            .SelectMany(a => a.Selectors)
+            .Select(s => s.AttributeRouteModel?.Template?.TrimStart('/'))
+            .Where(t => t != null)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(r => r!.Length)
+            .ToList();
+
+        if (actionRoutes.Count == 0) return null;
+
+        var shortest = actionRoutes[0]!;
+
+        // If there are routes of different lengths (e.g., collection + individual resource),
+        // and the shortest is a prefix of all longer routes, the shortest is the collection route
+        if (actionRoutes.Count > 1 && actionRoutes[0]!.Length != actionRoutes[^1]!.Length
+            && actionRoutes.Skip(1).All(r => r!.StartsWith(shortest, StringComparison.OrdinalIgnoreCase)))
+            return shortest;
+
+        // All routes are the same (or only one route) — strip last /{param} segment
+        // to get the collection route
+        var lastSlash = shortest.LastIndexOf('/');
+        return lastSlash > 0 ? shortest[..lastSlash] : shortest;
     }
 
     private static IEnumerable<string> GetActionSignatures(ActionModel action)
