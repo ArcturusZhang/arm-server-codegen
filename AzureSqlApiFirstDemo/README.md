@@ -20,7 +20,7 @@ GET {name} ?api-version=2025-12-01  →  V20251101.Get    (fallback — V2 has n
 GET {name} ?api-version=2026-02-01  →  V20260201.Get    (direct — reimplemented)
 
 GET        ?api-version=2025-12-01  →  V20251201.List   (direct)
-GET        ?api-version=2026-02-01  →  V20251201.List   (fallback — V3 has no List)
+GET        ?api-version=2026-02-01  →  V20260201.List   (direct — reimplemented)
 
 DELETE     ?api-version=2025-12-01  →  V20251101.Delete (fallback)
 DELETE     ?api-version=2026-02-01  →  V20251101.Delete (fallback)
@@ -48,14 +48,14 @@ The demo uses three API versions with a simple, incremental evolution:
 | **Create** (PUT) | ✅ implemented | ← fallback to V1 | ✅ reimplemented (new property) |
 | **Get** (GET `{name}`) | ✅ implemented | ← fallback to V1 | ✅ reimplemented (new property) |
 | **Delete** (DELETE) | ✅ implemented | ← fallback to V1 | ← fallback to V1 |
-| **List** (GET) | — | ✅ new | ← fallback to V2 |
+| **List** (GET) | — | ✅ new | ✅ reimplemented (new property) |
 | **Update** (PATCH) | — | ✅ new | ✅ reimplemented (new property) |
 
 **V1 (2025-11-01):** Introduces Create, Get, Delete — the baseline operations.
 
 **V2 (2025-12-01):** Adds List and Update. Since Create, Get, and Delete are unchanged, they fall back to V1's controller automatically.
 
-**V3 (2026-02-01):** Adds an `elasticPoolId` property to `DatabaseProperties`. This impacts Create, Get, and Update (their request/response shapes changed), so those three are reimplemented. Delete falls back to V1; List falls back to V2.
+**V3 (2026-02-01):** Adds an `elasticPoolId` property to `DatabaseProperties`. This impacts Create, Get, Update, and List (their request/response shapes changed), so those four are reimplemented. Delete falls back to V1.
 
 ## Project Structure
 
@@ -71,7 +71,7 @@ AzureSqlApiFirstDemo/
 │   ├── Controllers/DatabasesController.cs   # List, Update (new operations only)
 │   └── Models/Database.cs
 ├── V20260201/                               # API version 2026-02-01
-│   ├── Controllers/DatabasesController.cs   # Create, Get, Update (impacted by new property)
+│   ├── Controllers/DatabasesController.cs   # Create, Get, Update, List (impacted by new property)
 │   └── Models/Database.cs                   # Adds ElasticPoolId
 ├── Program.cs
 └── README.md
