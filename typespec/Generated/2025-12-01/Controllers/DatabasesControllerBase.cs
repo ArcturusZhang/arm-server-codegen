@@ -8,11 +8,11 @@ using System.Threading.Tasks;
 namespace Generated.V20251201.Controllers {
     [ApiController]
     [ApiVersion("2025-12-01")]
-    [Route(
-        "subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases")]
     public abstract class DatabasesControllerBase : ControllerBase
     {
-        [HttpPatch("{databaseName}")]
+        [Route(
+            "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/databases/{databaseName}")]
+        [HttpPatch]
         public abstract async Task<IActionResult> Update(
             string subscriptionId,
             string resourceGroupName,
@@ -22,6 +22,7 @@ namespace Generated.V20251201.Controllers {
             CancellationToken cancellationToken
         );
 
+        [Route("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/databases")]
         [HttpGet]
         public abstract async Task<IActionResult> ListByResourceGroup(
             string subscriptionId,

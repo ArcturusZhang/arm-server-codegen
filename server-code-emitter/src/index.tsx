@@ -38,9 +38,6 @@ export async function $onEmit(context: EmitContext<ServerEmitterOptions>) {
     }
   }
 
-  // Determine the route from the first impacted operation's interface
-  const route = getResourceRoute();
-
   // Get the interface name from operations (e.g., "Databases" from "Databases.get")
   const interfaceNames = getImpactedInterfaceNames(report);
 
@@ -66,17 +63,12 @@ export async function $onEmit(context: EmitContext<ServerEmitterOptions>) {
               op.operationName.startsWith(`${ifaceName}.`),
             )}
             program={context.program}
-            route={route}
           />
         ))}
       </SourceDirectory>
     </Output>,
     context.emitterOutputDir,
   );
-}
-
-function getResourceRoute(): string {
-  return "subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases";
 }
 
 function getImpactedInterfaceNames(report: {

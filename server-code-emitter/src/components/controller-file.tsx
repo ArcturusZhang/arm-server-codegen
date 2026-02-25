@@ -15,7 +15,6 @@ export interface ControllerFileProps {
   interfaceName: string;
   impactedOperations: OperationImpact[];
   program: Program;
-  route: string;
 }
 
 const httpVerbToAttribute = {
@@ -33,7 +32,6 @@ export function ControllerFile(props: ControllerFileProps): Children {
     interfaceName,
     impactedOperations,
     program,
-    route,
   } = props;
   const className = `${interfaceName}ControllerBase`;
 
@@ -48,10 +46,6 @@ export function ControllerFile(props: ControllerFileProps): Children {
           attributes={[
             { name: Mvc.ApiControllerAttribute },
             { name: AspVersioning.ApiVersionAttribute, args: [`"${version}"`] },
-            {
-              name: Mvc.RouteAttribute,
-              args: [`"${route}"`],
-            },
           ]}
         >
           <For
@@ -83,10 +77,6 @@ function ControllerMethod(props: ControllerMethodProps): Children {
     httpVerbToAttribute[httpOp.verb as keyof typeof httpVerbToAttribute] ??
     Mvc.HttpGetAttribute;
 
-  // Build route suffix from the operation's path relative to the resource
-  const routeSuffix = getRouteSuffix(httpOp.path);
-  const attrArgs = routeSuffix ? [`"${routeSuffix}"`] : [];
-
   // Build method parameters from HTTP operation
   const params = buildMethodParameters(httpOp);
 
@@ -100,20 +90,13 @@ function ControllerMethod(props: ControllerMethodProps): Children {
       async
       name={methodName}
       returns={code`${Tasks.Task}<${Mvc.IActionResult}>`}
-      attributes={[{ name: httpAttribute, args: attrArgs }]}
+      attributes={[
+        { name: Mvc.RouteAttribute, args: [`"${httpOp.path}"`] },
+        { name: httpAttribute },
+      ]}
       parameters={params}
     />
   );
-}
-
-function getRouteSuffix(fullPath: string): string {
-  // Extract the last segment if it contains a parameter (e.g., {databaseName})
-  const segments = fullPath.split("/").filter(Boolean);
-  const lastSegment = segments[segments.length - 1];
-  if (lastSegment && lastSegment.startsWith("{") && lastSegment.endsWith("}")) {
-    return lastSegment;
-  }
-  return "";
 }
 
 // Parameters to exclude — handled by the routing framework, not method signatures
