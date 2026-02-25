@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using Generated.V20251101.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading;
 using System.Threading.Tasks;

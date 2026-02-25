@@ -4,6 +4,7 @@ import Tasks from "@alloy-js/csharp/global/System/Threading/Tasks";
 import { code, Children, For } from "@alloy-js/core";
 import { Operation, Program } from "@typespec/compiler";
 import { getHttpOperation } from "@typespec/http";
+import { TypeExpression } from "@typespec/emitter-framework/csharp";
 import { Mvc, AspVersioning } from "../lib/aspnet.js";
 import { ServerCodeSourceFile } from "./source-file.js";
 import type { OperationImpact } from "../types.js";
@@ -155,13 +156,9 @@ function buildMethodParameters(
   // Add body parameter if present
   if (httpOp.parameters.body) {
     const bodyType = httpOp.parameters.body.type;
-    const bodyTypeName =
-      bodyType.kind === "Model" && "name" in bodyType
-        ? (bodyType as any).name
-        : "object";
     params.push({
       name: "body",
-      type: bodyTypeName,
+      type: code`${<TypeExpression type={bodyType} />}`,
       attributes: [{ name: Mvc.FromBodyAttribute }],
     });
   }
