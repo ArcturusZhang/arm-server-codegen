@@ -1,0 +1,108 @@
+@AzureSqlApiFirstDemo_HostAddress = http://localhost:5188
+
+### Variables
+@subscriptionId = 00000000-0000-0000-0000-000000000001
+@resourceGroupName = myResourceGroup
+@serverName = myserver
+@databaseName = mydb
+
+###############################################
+# API Version 2025-11-01 (V1)
+# Operations: Create (PUT), Get (GET), Delete (DELETE)
+###############################################
+
+### Get Database (v2025-11-01)
+GET {{AzureSqlApiFirstDemo_HostAddress}}/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Sql/servers/{{serverName}}/databases/{{databaseName}}?api-version=2025-11-01
+Accept: application/json
+
+### Create Database (v2025-11-01)
+PUT {{AzureSqlApiFirstDemo_HostAddress}}/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Sql/servers/{{serverName}}/databases/{{databaseName}}?api-version=2025-11-01
+Content-Type: application/json
+
+{
+  "location": "eastus",
+  "properties": {
+    "collation": "SQL_Latin1_General_CP1_CI_AS",
+    "maxSizeBytes": 268435456000
+  }
+}
+
+### Delete Database (v2025-11-01)
+DELETE {{AzureSqlApiFirstDemo_HostAddress}}/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Sql/servers/{{serverName}}/databases/{{databaseName}}?api-version=2025-11-01
+
+###############################################
+# API Version 2025-12-01 (V2)
+# New operations: List (GET), Update (PATCH)
+# Create, Get, Delete fall back to V1
+###############################################
+
+### Get Database (v2025-12-01) → falls back to V20251101
+GET {{AzureSqlApiFirstDemo_HostAddress}}/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Sql/servers/{{serverName}}/databases/{{databaseName}}?api-version=2025-12-01
+Accept: application/json
+
+### List Databases (v2025-12-01)
+GET {{AzureSqlApiFirstDemo_HostAddress}}/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Sql/servers/{{serverName}}/databases?api-version=2025-12-01
+Accept: application/json
+
+### Update Database (v2025-12-01)
+PATCH {{AzureSqlApiFirstDemo_HostAddress}}/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Sql/servers/{{serverName}}/databases/{{databaseName}}?api-version=2025-12-01
+Content-Type: application/json
+
+{
+  "properties": {
+    "collation": "SQL_Latin1_General_CP1_CI_AS"
+  }
+}
+
+### Delete Database (v2025-12-01) → falls back to V20251101
+DELETE {{AzureSqlApiFirstDemo_HostAddress}}/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Sql/servers/{{serverName}}/databases/{{databaseName}}?api-version=2025-12-01
+
+###############################################
+# API Version 2026-02-01 (V3)
+# Adds ElasticPoolId property → reimplements Create, Get, Update
+# Delete falls back to V1, List falls back to V2
+###############################################
+
+### Get Database (v2026-02-01) → served by V20260201 (ElasticPoolId in response)
+GET {{AzureSqlApiFirstDemo_HostAddress}}/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Sql/servers/{{serverName}}/databases/{{databaseName}}?api-version=2026-02-01
+Accept: application/json
+
+### Create Database (v2026-02-01) with ElasticPoolId
+PUT {{AzureSqlApiFirstDemo_HostAddress}}/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Sql/servers/{{serverName}}/databases/{{databaseName}}?api-version=2026-02-01
+Content-Type: application/json
+
+{
+  "location": "eastus",
+  "properties": {
+    "collation": "SQL_Latin1_General_CP1_CI_AS",
+    "maxSizeBytes": 268435456000,
+    "elasticPoolId": "/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/elasticPools/pool1"
+  }
+}
+
+### List Databases (v2026-02-01) → falls back to V20251201
+GET {{AzureSqlApiFirstDemo_HostAddress}}/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Sql/servers/{{serverName}}/databases?api-version=2026-02-01
+Accept: application/json
+
+### Update Database (v2026-02-01) with ElasticPoolId
+PATCH {{AzureSqlApiFirstDemo_HostAddress}}/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Sql/servers/{{serverName}}/databases/{{databaseName}}?api-version=2026-02-01
+Content-Type: application/json
+
+{
+  "properties": {
+    "elasticPoolId": "/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/elasticPools/pool1"
+  }
+}
+
+### Delete Database (v2026-02-01) → falls back to V20251101
+DELETE {{AzureSqlApiFirstDemo_HostAddress}}/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Sql/servers/{{serverName}}/databases/{{databaseName}}?api-version=2026-02-01
+
+###############################################
+# Version Not Found Test
+###############################################
+
+### Request with unsupported version (should return 400)
+GET {{AzureSqlApiFirstDemo_HostAddress}}/subscriptions/{{subscriptionId}}/resourceGroups/{{resourceGroupName}}/providers/Microsoft.Sql/servers/{{serverName}}/databases/{{databaseName}}?api-version=2019-01-01
+Accept: application/json
+
+###
