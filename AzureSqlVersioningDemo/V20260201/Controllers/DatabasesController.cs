@@ -7,8 +7,8 @@ namespace AzureSqlVersioningDemo.V20260201.Controllers;
 
 /// <summary>
 /// Database controller for API version 2026-02-01.
-/// Implements operations impacted by the new ElasticPoolId property: Create, Get, and Update.
-/// Delete falls back to V20251101, List falls back to V20251201.
+/// Implements operations impacted by the new ElasticPoolId property: Create, Get, Update, and List.
+/// Delete falls back to V20251101.
 /// </summary>
 [ApiController]
 [ApiVersion("2026-02-01")]
@@ -109,6 +109,16 @@ public class DatabasesController : ControllerBase
         }
     };
 
+    [HttpGet]
+    public ActionResult<IEnumerable<DatabaseResource>> List(
+        string subscriptionId, string resourceGroupName)
+    {
+        _logger.LogInformation("LIST Databases - served by V20260201 controller");
+
+        var entities = _store.List(subscriptionId, resourceGroupName);
+        var resources = entities.Select(ToResource).ToList();
+        return Ok(resources);
+    }
+
     // Delete (DELETE) falls back to V20251101.
-    // List (GET) falls back to V20251201.
 }
