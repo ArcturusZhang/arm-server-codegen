@@ -12,7 +12,7 @@ namespace AzureSqlApiFirstDemo.V20260201.Controllers;
 /// </summary>
 [ApiController]
 [ApiVersion("2026-02-01")]
-[Route("subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases")]
+[Route("subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/databases")]
 public class DatabasesController : ControllerBase
 {
     private readonly ILogger<DatabasesController> _logger;
@@ -26,11 +26,11 @@ public class DatabasesController : ControllerBase
 
     [HttpGet("{databaseName}")]
     public ActionResult<DatabaseResource> Get(
-        string subscriptionId, string resourceGroupName, string serverName, string databaseName)
+        string subscriptionId, string resourceGroupName, string databaseName)
     {
         _logger.LogInformation("GET Database - served by V20260201 controller");
 
-        var key = DatabaseStore.BuildKey(subscriptionId, resourceGroupName, serverName, databaseName);
+        var key = DatabaseStore.BuildKey(subscriptionId, resourceGroupName, databaseName);
         var entity = _store.Get(key);
         if (entity == null)
             return NotFound(new { error = new { code = "ResourceNotFound", message = $"Database '{databaseName}' not found." } });
@@ -40,17 +40,17 @@ public class DatabasesController : ControllerBase
 
     [HttpPut("{databaseName}")]
     public ActionResult<DatabaseResource> CreateOrUpdate(
-        string subscriptionId, string resourceGroupName, string serverName, string databaseName,
+        string subscriptionId, string resourceGroupName, string databaseName,
         [FromBody] DatabaseResource request)
     {
         _logger.LogInformation("PUT Database - served by V20260201 controller");
 
-        var key = DatabaseStore.BuildKey(subscriptionId, resourceGroupName, serverName, databaseName);
+        var key = DatabaseStore.BuildKey(subscriptionId, resourceGroupName, databaseName);
         var isNew = _store.Get(key) == null;
 
         var entity = _store.CreateOrUpdate(key, new DatabaseEntity
         {
-            Id = DatabaseStore.BuildResourceId(subscriptionId, resourceGroupName, serverName, databaseName),
+            Id = DatabaseStore.BuildResourceId(subscriptionId, resourceGroupName, databaseName),
             Name = databaseName,
             Location = request.Location ?? "eastus",
             Tags = request.Tags,
@@ -69,15 +69,15 @@ public class DatabasesController : ControllerBase
 
     [HttpPatch("{databaseName}")]
     public ActionResult<DatabaseResource> Update(
-        string subscriptionId, string resourceGroupName, string serverName, string databaseName,
+        string subscriptionId, string resourceGroupName, string databaseName,
         [FromBody] DatabaseResource request)
     {
         _logger.LogInformation("PATCH Database - served by V20260201 controller");
 
-        var key = DatabaseStore.BuildKey(subscriptionId, resourceGroupName, serverName, databaseName);
+        var key = DatabaseStore.BuildKey(subscriptionId, resourceGroupName, databaseName);
         var entity = _store.Patch(key, new DatabaseEntity
         {
-            Id = DatabaseStore.BuildResourceId(subscriptionId, resourceGroupName, serverName, databaseName),
+            Id = DatabaseStore.BuildResourceId(subscriptionId, resourceGroupName, databaseName),
             Name = databaseName,
             Location = request.Location,
             Tags = request.Tags,

@@ -99,24 +99,24 @@ Or test manually with curl:
 
 ```bash
 # Create a database via V1
-curl -X PUT "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/databases/mydb?api-version=2025-11-01" \
+curl -X PUT "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/databases/mydb?api-version=2025-11-01" \
   -H "Content-Type: application/json" \
   -d '{"location":"eastus","properties":{"collation":"SQL_Latin1_General_CP1_CI_AS","maxSizeBytes":268435456000}}'
 
 # Get via V1 (no ElasticPoolId)
-curl "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/databases/mydb?api-version=2025-11-01"
+curl "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/databases/mydb?api-version=2025-11-01"
 
 # Get via V3 (includes ElasticPoolId field)
-curl "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/databases/mydb?api-version=2026-02-01"
+curl "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/databases/mydb?api-version=2026-02-01"
 
 # List via V2
-curl "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/databases?api-version=2025-12-01"
+curl "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/databases?api-version=2025-12-01"
 
 # Patch via V3 (set ElasticPoolId)
-curl -X PATCH "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/databases/mydb?api-version=2026-02-01" \
+curl -X PATCH "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/databases/mydb?api-version=2026-02-01" \
   -H "Content-Type: application/json" \
-  -d '{"properties":{"elasticPoolId":"/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/elasticPools/pool1"}}'
+  -d '{"properties":{"elasticPoolId":"/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/elasticPools/pool1"}}'
 
 # Delete
-curl -X DELETE "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/databases/mydb?api-version=2025-11-01"
+curl -X DELETE "http://localhost:5188/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/databases/mydb?api-version=2025-11-01"
 ```

@@ -10,14 +10,14 @@ namespace AzureSqlApiFirstDemo.Infrastructure;
 /// </summary>
 public class DatabaseStore
 {
-    // Key: "{subscriptionId}/{resourceGroupName}/{serverName}/{databaseName}" (case-insensitive)
+    // Key: "{subscriptionId}/{resourceGroupName}/{databaseName}" (case-insensitive)
     private readonly ConcurrentDictionary<string, DatabaseEntity> _databases = new(StringComparer.OrdinalIgnoreCase);
 
-    public static string BuildKey(string subscriptionId, string resourceGroupName, string serverName, string databaseName)
-        => $"{subscriptionId}/{resourceGroupName}/{serverName}/{databaseName}";
+    public static string BuildKey(string subscriptionId, string resourceGroupName, string databaseName)
+        => $"{subscriptionId}/{resourceGroupName}/{databaseName}";
 
-    public static string BuildResourceId(string subscriptionId, string resourceGroupName, string serverName, string databaseName)
-        => $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}";
+    public static string BuildResourceId(string subscriptionId, string resourceGroupName, string databaseName)
+        => $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/databases/{databaseName}";
 
     public DatabaseEntity? Get(string key) => _databases.GetValueOrDefault(key);
 
@@ -52,9 +52,9 @@ public class DatabaseStore
 
     public bool Delete(string key) => _databases.TryRemove(key, out _);
 
-    public IEnumerable<DatabaseEntity> List(string subscriptionId, string resourceGroupName, string serverName)
+    public IEnumerable<DatabaseEntity> List(string subscriptionId, string resourceGroupName)
     {
-        var prefix = $"{subscriptionId}/{resourceGroupName}/{serverName}/";
+        var prefix = $"{subscriptionId}/{resourceGroupName}/";
         return _databases
             .Where(kv => kv.Key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
             .Select(kv => kv.Value);
@@ -68,7 +68,7 @@ public class DatabaseEntity
 {
     public required string Id { get; set; }
     public required string Name { get; set; }
-    public string Type { get; set; } = "Microsoft.Sql/servers/databases";
+    public string Type { get; set; } = "Microsoft.Sql/databases";
     public string? Location { get; set; }
     public Dictionary<string, string>? Tags { get; set; }
 
