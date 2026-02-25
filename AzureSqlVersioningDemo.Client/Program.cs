@@ -12,7 +12,7 @@ var jsonOpts = new JsonSerializerOptions
     WriteIndented = true
 };
 
-var basePath = "subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/servers/srv1/databases";
+var basePath = "subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.Sql/databases";
 
 Console.WriteLine("=== Azure SQL Versioning Demo Client ===\n");
 
