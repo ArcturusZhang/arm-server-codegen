@@ -116,21 +116,8 @@ function getRouteSuffix(fullPath: string): string {
   return "";
 }
 
-interface HttpOperation {
-  verb: string;
-  path: string;
-  parameters: {
-    parameters: Array<{
-      type: string;
-      name: string;
-      param: { type: { kind: string } };
-    }>;
-    body?: { type: { kind: string } };
-  };
-}
-
 // Parameters to exclude — handled by the routing framework, not method signatures
-const excludedParams = new Set(["api-version", "apiVersion", "provider"]);
+const excludedParams = new Set(["api-version", "apiVersion"]);
 
 function buildMethodParameters(
   httpOp: ReturnType<typeof getHttpOperation>[0],
