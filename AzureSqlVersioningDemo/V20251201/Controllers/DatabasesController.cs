@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using AzureSqlVersioningDemo.Infrastructure;
 using AzureSqlVersioningDemo.V20251201.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,10 +16,12 @@ namespace AzureSqlVersioningDemo.V20251201.Controllers;
 public class DatabasesController : ControllerBase
 {
     private readonly ILogger<DatabasesController> _logger;
+    private readonly DatabaseStore _store;
 
-    public DatabasesController(ILogger<DatabasesController> logger)
+    public DatabasesController(ILogger<DatabasesController> logger, DatabaseStore store)
     {
         _logger = logger;
+        _store = store;
     }
 
     [HttpGet]
@@ -27,21 +30,9 @@ public class DatabasesController : ControllerBase
     {
         _logger.LogInformation("LIST Databases - served by V20251201 controller");
 
-        return Ok(new[]
-        {
-            new DatabaseResource
-            {
-                Id = $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/db1",
-                Name = "db1",
-                Type = "Microsoft.Sql/servers/databases",
-                Location = "eastus",
-                Properties = new DatabaseProperties
-                {
-                    Description = "Served by V20251201 controller",
-                    Status = "Online"
-                }
-            }
-        });
+        var entities = _store.List(subscriptionId, resourceGroupName, serverName);
+        var resources = entities.Select(ToResource).ToList();
+        return Ok(resources);
     }
 
     [HttpPatch("{databaseName}")]
@@ -51,20 +42,38 @@ public class DatabasesController : ControllerBase
     {
         _logger.LogInformation("PATCH Database - served by V20251201 controller");
 
-        return Ok(new DatabaseResource
+        var key = DatabaseStore.BuildKey(subscriptionId, resourceGroupName, serverName, databaseName);
+        var entity = _store.Patch(key, new DatabaseEntity
         {
-            Id = $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}",
+            Id = DatabaseStore.BuildResourceId(subscriptionId, resourceGroupName, serverName, databaseName),
             Name = databaseName,
-            Type = "Microsoft.Sql/servers/databases",
-            Location = "eastus",
-            Properties = new DatabaseProperties
-            {
-                Description = "Served by V20251201 controller",
-                Collation = request.Properties?.Collation ?? "SQL_Latin1_General_CP1_CI_AS",
-                Status = "Online"
-            }
+            Location = request.Location,
+            Tags = request.Tags,
+            Collation = request.Properties?.Collation,
+            MaxSizeBytes = request.Properties?.MaxSizeBytes,
         });
+
+        if (entity == null)
+            return NotFound(new { error = new { code = "ResourceNotFound", message = $"Database '{databaseName}' not found." } });
+
+        return Ok(ToResource(entity));
     }
+
+    private static DatabaseResource ToResource(DatabaseEntity entity) => new()
+    {
+        Id = entity.Id,
+        Name = entity.Name,
+        Type = entity.Type,
+        Location = entity.Location,
+        Tags = entity.Tags,
+        Properties = new DatabaseProperties
+        {
+            Collation = entity.Collation,
+            MaxSizeBytes = entity.MaxSizeBytes,
+            Status = entity.Status,
+            CreationDate = entity.CreationDate,
+        }
+    };
 
     // Create (PUT), Get (GET {name}), Delete (DELETE) fall back to V20251101.
 }
