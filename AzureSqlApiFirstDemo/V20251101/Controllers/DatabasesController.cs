@@ -1,6 +1,7 @@
-using Asp.Versioning;
 using AzureSqlApiFirstDemo.Infrastructure;
-using AzureSqlApiFirstDemo.V20251101.Models;
+using Asp.Versioning;
+using Generated.V20251101.Controllers;
+using Generated.V20251101.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AzureSqlApiFirstDemo.V20251101.Controllers;
@@ -9,10 +10,8 @@ namespace AzureSqlApiFirstDemo.V20251101.Controllers;
 /// Database controller for API version 2025-11-01.
 /// Supports: Create (PUT), Get (GET {name}), Delete (DELETE).
 /// </summary>
-[ApiController]
 [ApiVersion("2025-11-01")]
-[Route("subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/databases")]
-public class DatabasesController : ControllerBase
+public class DatabasesController : DatabasesControllerBase
 {
     private readonly ILogger<DatabasesController> _logger;
     private readonly DatabaseStore _store;
@@ -23,24 +22,22 @@ public class DatabasesController : ControllerBase
         _store = store;
     }
 
-    [HttpGet("{databaseName}")]
-    public ActionResult<DatabaseResource> Get(
-        string subscriptionId, string resourceGroupName, string databaseName)
+    public override Task<IActionResult> Get(
+        string subscriptionId, string resourceGroupName, string databaseName, CancellationToken cancellationToken)
     {
         _logger.LogInformation("GET Database - served by V20251101 controller");
 
         var key = DatabaseStore.BuildKey(subscriptionId, resourceGroupName, databaseName);
         var entity = _store.Get(key);
         if (entity == null)
-            return NotFound(new { error = new { code = "ResourceNotFound", message = $"Database '{databaseName}' not found." } });
+            return Task.FromResult<IActionResult>(NotFound(new { error = new { code = "ResourceNotFound", message = $"Database '{databaseName}' not found." } }));
 
-        return Ok(ToResource(entity));
+        return Task.FromResult<IActionResult>(Ok(ToResource(entity)));
     }
 
-    [HttpPut("{databaseName}")]
-    public ActionResult<DatabaseResource> CreateOrUpdate(
+    public override Task<IActionResult> CreateOrUpdate(
         string subscriptionId, string resourceGroupName, string databaseName,
-        [FromBody] DatabaseResource request)
+        Database body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("PUT Database - served by V20251101 controller");
 
@@ -51,10 +48,10 @@ public class DatabasesController : ControllerBase
         {
             Id = DatabaseStore.BuildResourceId(subscriptionId, resourceGroupName, databaseName),
             Name = databaseName,
-            Location = request.Location ?? "eastus",
-            Tags = request.Tags,
-            Collation = request.Properties?.Collation,
-            MaxSizeBytes = request.Properties?.MaxSizeBytes,
+            Location = body.Location,
+            Tags = body.Tags?.ToDictionary(kv => kv.Key, kv => kv.Value),
+            Collation = body.Properties?.Collation,
+            MaxSizeBytes = body.Properties?.MaxSizeBytes,
             Status = isNew ? "Creating" : "Online",
             CreationDate = isNew ? DateTimeOffset.UtcNow : null,
         });
@@ -62,28 +59,27 @@ public class DatabasesController : ControllerBase
         if (isNew)
             entity.Status = "Online";
 
-        return isNew ? StatusCode(201, ToResource(entity)) : Ok(ToResource(entity));
+        return Task.FromResult<IActionResult>(isNew ? StatusCode(201, ToResource(entity)) : Ok(ToResource(entity)));
     }
 
-    [HttpDelete("{databaseName}")]
-    public IActionResult Delete(
-        string subscriptionId, string resourceGroupName, string databaseName)
+    public override Task<IActionResult> Delete(
+        string subscriptionId, string resourceGroupName, string databaseName, CancellationToken cancellationToken)
     {
         _logger.LogInformation("DELETE Database - served by V20251101 controller");
 
         var key = DatabaseStore.BuildKey(subscriptionId, resourceGroupName, databaseName);
         if (!_store.Delete(key))
-            return NotFound(new { error = new { code = "ResourceNotFound", message = $"Database '{databaseName}' not found." } });
+            return Task.FromResult<IActionResult>(NotFound(new { error = new { code = "ResourceNotFound", message = $"Database '{databaseName}' not found." } }));
 
-        return Ok();
+        return Task.FromResult<IActionResult>(Ok());
     }
 
-    private static DatabaseResource ToResource(DatabaseEntity entity) => new()
+    private static Database ToResource(DatabaseEntity entity) => new()
     {
         Id = entity.Id,
         Name = entity.Name,
         Type = entity.Type,
-        Location = entity.Location,
+        Location = entity.Location ?? "eastus",
         Tags = entity.Tags,
         Properties = new DatabaseProperties
         {
