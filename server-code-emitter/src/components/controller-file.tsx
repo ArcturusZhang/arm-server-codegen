@@ -78,16 +78,15 @@ function ControllerMethod(props: ControllerMethodProps): Children {
   const { operation, program } = props;
   const [httpOp] = getHttpOperation(program, operation);
 
-  const verb = httpOp.verb;
   const httpAttribute =
-    httpVerbToAttribute[verb as keyof typeof httpVerbToAttribute] ??
+    httpVerbToAttribute[httpOp.verb as keyof typeof httpVerbToAttribute] ??
     Mvc.HttpGetAttribute;
 
   // Build route suffix from the operation's path relative to the resource
   const routeSuffix = getRouteSuffix(httpOp.path);
   const attrArgs = routeSuffix ? [`"${routeSuffix}"`] : [];
 
-  // Build method parameters
+  // Build method parameters from HTTP operation
   const params = buildMethodParameters(httpOp);
 
   // Determine method name (PascalCase from operation name)
@@ -124,10 +123,21 @@ function buildMethodParameters(
 ): cs.ParameterProps[] {
   const params: cs.ParameterProps[] = [];
 
-  // Add path and query parameters (excluding framework-level ones)
+  // Add path parameters
   for (const param of httpOp.parameters.parameters) {
     if (excludedParams.has(param.name)) continue;
-    if (param.type === "path" || param.type === "query") {
+    if (param.type === "path") {
+      params.push({
+        name: param.name,
+        type: "string",
+      });
+    }
+  }
+
+  // Add query parameters
+  for (const param of httpOp.parameters.parameters) {
+    if (excludedParams.has(param.name)) continue;
+    if (param.type === "query") {
       params.push({
         name: param.name,
         type: "string",
