@@ -35,6 +35,7 @@ builder.Services.AddApiVersioning(options =>
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
+builder.Services.AddSingleton<AzureSqlVersioningDemo.Infrastructure.DatabaseStore>();
 
 var app = builder.Build();
 

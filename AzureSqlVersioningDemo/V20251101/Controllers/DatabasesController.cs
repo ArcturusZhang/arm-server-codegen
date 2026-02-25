@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using AzureSqlVersioningDemo.Infrastructure;
 using AzureSqlVersioningDemo.V20251101.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -14,10 +15,12 @@ namespace AzureSqlVersioningDemo.V20251101.Controllers;
 public class DatabasesController : ControllerBase
 {
     private readonly ILogger<DatabasesController> _logger;
+    private readonly DatabaseStore _store;
 
-    public DatabasesController(ILogger<DatabasesController> logger)
+    public DatabasesController(ILogger<DatabasesController> logger, DatabaseStore store)
     {
         _logger = logger;
+        _store = store;
     }
 
     [HttpGet("{databaseName}")]
@@ -26,21 +29,12 @@ public class DatabasesController : ControllerBase
     {
         _logger.LogInformation("GET Database - served by V20251101 controller");
 
-        return Ok(new DatabaseResource
-        {
-            Id = $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}",
-            Name = databaseName,
-            Type = "Microsoft.Sql/servers/databases",
-            Location = "eastus",
-            Properties = new DatabaseProperties
-            {
-                Description = "Served by V20251101 controller",
-                Collation = "SQL_Latin1_General_CP1_CI_AS",
-                MaxSizeBytes = 268435456000,
-                Status = "Online",
-                CreationDate = DateTimeOffset.UtcNow.AddDays(-30)
-            }
-        });
+        var key = DatabaseStore.BuildKey(subscriptionId, resourceGroupName, serverName, databaseName);
+        var entity = _store.Get(key);
+        if (entity == null)
+            return NotFound(new { error = new { code = "ResourceNotFound", message = $"Database '{databaseName}' not found." } });
+
+        return Ok(ToResource(entity));
     }
 
     [HttpPut("{databaseName}")]
@@ -50,19 +44,25 @@ public class DatabasesController : ControllerBase
     {
         _logger.LogInformation("PUT Database - served by V20251101 controller");
 
-        return Ok(new DatabaseResource
+        var key = DatabaseStore.BuildKey(subscriptionId, resourceGroupName, serverName, databaseName);
+        var isNew = _store.Get(key) == null;
+
+        var entity = _store.CreateOrUpdate(key, new DatabaseEntity
         {
-            Id = $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/servers/{serverName}/databases/{databaseName}",
+            Id = DatabaseStore.BuildResourceId(subscriptionId, resourceGroupName, serverName, databaseName),
             Name = databaseName,
-            Type = "Microsoft.Sql/servers/databases",
             Location = request.Location ?? "eastus",
             Tags = request.Tags,
-            Properties = new DatabaseProperties
-            {
-                Description = "Served by V20251101 controller",
-                Status = "Creating"
-            }
+            Collation = request.Properties?.Collation,
+            MaxSizeBytes = request.Properties?.MaxSizeBytes,
+            Status = isNew ? "Creating" : "Online",
+            CreationDate = isNew ? DateTimeOffset.UtcNow : null,
         });
+
+        if (isNew)
+            entity.Status = "Online";
+
+        return isNew ? StatusCode(201, ToResource(entity)) : Ok(ToResource(entity));
     }
 
     [HttpDelete("{databaseName}")]
@@ -70,6 +70,27 @@ public class DatabasesController : ControllerBase
         string subscriptionId, string resourceGroupName, string serverName, string databaseName)
     {
         _logger.LogInformation("DELETE Database - served by V20251101 controller");
-        return Ok(new { description = "Served by V20251101 controller" });
+
+        var key = DatabaseStore.BuildKey(subscriptionId, resourceGroupName, serverName, databaseName);
+        if (!_store.Delete(key))
+            return NotFound(new { error = new { code = "ResourceNotFound", message = $"Database '{databaseName}' not found." } });
+
+        return Ok();
     }
+
+    private static DatabaseResource ToResource(DatabaseEntity entity) => new()
+    {
+        Id = entity.Id,
+        Name = entity.Name,
+        Type = entity.Type,
+        Location = entity.Location,
+        Tags = entity.Tags,
+        Properties = new DatabaseProperties
+        {
+            Collation = entity.Collation,
+            MaxSizeBytes = entity.MaxSizeBytes,
+            Status = entity.Status,
+            CreationDate = entity.CreationDate,
+        }
+    };
 }
