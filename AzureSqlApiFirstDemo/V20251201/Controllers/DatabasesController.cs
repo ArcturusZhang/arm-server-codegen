@@ -1,19 +1,18 @@
+using AzureSqlApiFirstDemo.Infrastructure;
 using Asp.Versioning;
-using AzureSqlVersioningDemo.Infrastructure;
-using AzureSqlVersioningDemo.V20251201.Models;
+using Generated.V20251201.Controllers;
+using Generated.V20251201.Models;
 using Microsoft.AspNetCore.Mvc;
 
-namespace AzureSqlVersioningDemo.V20251201.Controllers;
+namespace AzureSqlApiFirstDemo.V20251201.Controllers;
 
 /// <summary>
 /// Database controller for API version 2025-12-01.
 /// Only implements new operations: List (GET) and Update (PATCH).
 /// Create, Get, and Delete fall back to V20251101 via VersionFallbackConvention.
 /// </summary>
-[ApiController]
 [ApiVersion("2025-12-01")]
-[Route("subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/databases")]
-public class DatabasesController : ControllerBase
+public class DatabasesController : DatabasesControllerBase
 {
     private readonly ILogger<DatabasesController> _logger;
     private readonly DatabaseStore _store;
@@ -24,21 +23,19 @@ public class DatabasesController : ControllerBase
         _store = store;
     }
 
-    [HttpGet]
-    public ActionResult<IEnumerable<DatabaseResource>> List(
-        string subscriptionId, string resourceGroupName)
+    public override Task<IActionResult> ListByResourceGroup(
+        string subscriptionId, string resourceGroupName, CancellationToken cancellationToken)
     {
         _logger.LogInformation("LIST Databases - served by V20251201 controller");
 
         var entities = _store.List(subscriptionId, resourceGroupName);
         var resources = entities.Select(ToResource).ToList();
-        return Ok(resources);
+        return Task.FromResult<IActionResult>(Ok(resources));
     }
 
-    [HttpPatch("{databaseName}")]
-    public ActionResult<DatabaseResource> Update(
+    public override Task<IActionResult> Update(
         string subscriptionId, string resourceGroupName, string databaseName,
-        [FromBody] DatabaseUpdate request)
+        ResourceUpdateModel body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("PATCH Database - served by V20251201 controller");
 
@@ -47,23 +44,23 @@ public class DatabasesController : ControllerBase
         {
             Id = DatabaseStore.BuildResourceId(subscriptionId, resourceGroupName, databaseName),
             Name = databaseName,
-            Tags = request.Tags,
-            Collation = request.Properties?.Collation,
-            MaxSizeBytes = request.Properties?.MaxSizeBytes,
+            Tags = body.Tags?.ToDictionary(kv => kv.Key, kv => kv.Value),
+            Collation = body.Properties?.Collation,
+            MaxSizeBytes = body.Properties?.MaxSizeBytes,
         });
 
         if (entity == null)
-            return NotFound(new { error = new { code = "ResourceNotFound", message = $"Database '{databaseName}' not found." } });
+            return Task.FromResult<IActionResult>(NotFound(new { error = new { code = "ResourceNotFound", message = $"Database '{databaseName}' not found." } }));
 
-        return Ok(ToResource(entity));
+        return Task.FromResult<IActionResult>(Ok(ToResource(entity)));
     }
 
-    private static DatabaseResource ToResource(DatabaseEntity entity) => new()
+    private static Database ToResource(DatabaseEntity entity) => new()
     {
         Id = entity.Id,
         Name = entity.Name,
         Type = entity.Type,
-        Location = entity.Location,
+        Location = entity.Location ?? "eastus",
         Tags = entity.Tags,
         Properties = new DatabaseProperties
         {

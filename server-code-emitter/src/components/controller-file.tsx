@@ -87,7 +87,6 @@ function ControllerMethod(props: ControllerMethodProps): Children {
     <cs.Method
       public
       abstract
-      async
       name={methodName}
       returns={code`${Tasks.Task}<${Mvc.IActionResult}>`}
       attributes={[

@@ -2,6 +2,7 @@ import { EmitContext, Enum, Model, Union } from "@typespec/compiler";
 import { SourceDirectory } from "@alloy-js/core";
 import { createCSharpNamePolicy } from "@alloy-js/csharp";
 import { Output, writeOutput } from "@typespec/emitter-framework";
+import { getHttpOperation } from "@typespec/http";
 import type { ServerEmitterOptions } from "./lib.js";
 import { analyzeVersionImpact } from "./analyze.js";
 import { ImpactAnalysisReport } from "./report.js";
@@ -26,8 +27,28 @@ export async function $onEmit(context: EmitContext<ServerEmitterOptions>) {
   const modelsNamespace = `Generated.V${versionTag}.Models`;
   const controllersNamespace = `Generated.V${versionTag}.Controllers`;
 
+  // Collect body parameter models from impacted operations that aren't
+  // already in the namespace (e.g., DatabaseUpdate from ResourceUpdateModel)
+  const bodyModels: Model[] = [];
+  for (const op of report.impactedOperations) {
+    if (op.operation) {
+      const [httpOp] = getHttpOperation(context.program, op.operation);
+      const bodyType = httpOp.parameters.body?.type;
+      if (
+        bodyType?.kind === "Model" &&
+        bodyType.name &&
+        !report.snapshot.models.has(bodyType.name)
+      ) {
+        bodyModels.push(bodyType);
+      }
+    }
+  }
+
   // Collect models and enums/unions from the full dependency tree
-  const { models, enums } = collectTypeDependencies(report.snapshot.models);
+  const { models, enums } = collectTypeDependencies(
+    report.snapshot.models,
+    bodyModels,
+  );
 
   // Close extensible unions by removing the open scalar variant so the
   // emitter-framework can represent them as enums. We mutate the projected
@@ -88,7 +109,10 @@ function getImpactedInterfaceNames(report: {
  * Walk the full type dependency tree for every snapshot model, collecting
  * base types, property model types, and union/enum types referenced by properties.
  */
-function collectTypeDependencies(snapshotModels: Map<string, ModelSnapshot>): {
+function collectTypeDependencies(
+  snapshotModels: Map<string, ModelSnapshot>,
+  additionalModels?: Model[],
+): {
   models: Model[];
   enums: (Union | Enum)[];
 } {
@@ -96,6 +120,11 @@ function collectTypeDependencies(snapshotModels: Map<string, ModelSnapshot>): {
   const collectedEnums = new Map<string, Union | Enum>();
   for (const snapshot of snapshotModels.values()) {
     walkModelDeps(snapshot.model, collectedModels, collectedEnums);
+  }
+  if (additionalModels) {
+    for (const model of additionalModels) {
+      walkModelDeps(model, collectedModels, collectedEnums);
+    }
   }
   return {
     models: Array.from(collectedModels.values()),

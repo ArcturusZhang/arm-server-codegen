@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc.ActionConstraints;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using System.Reflection;
 
-namespace AzureSqlVersioningDemo.Infrastructure;
+namespace AzureSqlApiFirstDemo.Infrastructure;
 
 /// <summary>
 /// A versioning convention that implements Azure SQL-style version fallback.

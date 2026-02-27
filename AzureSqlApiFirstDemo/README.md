@@ -60,7 +60,7 @@ The demo uses three API versions with a simple, incremental evolution:
 ## Project Structure
 
 ```
-AzureSqlVersioningDemo/
+AzureSqlApiFirstDemo/
 ├── Infrastructure/
 │   ├── DatabaseStore.cs                     # In-memory store (ConcurrentDictionary singleton)
 │   └── VersionFallbackConvention.cs         # Azure SQL-style version fallback (IControllerConvention)
@@ -84,7 +84,7 @@ AzureSqlVersioningDemo/
 ## Getting Started
 
 ```bash
-cd AzureSqlVersioningDemo
+cd AzureSqlApiFirstDemo
 dotnet build
 dotnet run
 ```
@@ -93,7 +93,7 @@ The server starts on `http://localhost:5188`.
 
 ## Testing
 
-Use the companion client project (`AzureSqlVersioningDemo.Client`) to exercise all CRUD operations across versions. See the [client README](../AzureSqlVersioningDemo.Client/README.md) for details.
+Use the companion client project (`AzureSqlApiFirstDemo.Client`) to exercise all CRUD operations across versions. See the [client README](../AzureSqlApiFirstDemo.Client/README.md) for details.
 
 Or test manually with curl:
 

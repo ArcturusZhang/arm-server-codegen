@@ -1,19 +1,18 @@
+using AzureSqlApiFirstDemo.Infrastructure;
 using Asp.Versioning;
-using AzureSqlVersioningDemo.Infrastructure;
-using AzureSqlVersioningDemo.V20260201.Models;
+using Generated.V20260201.Controllers;
+using Generated.V20260201.Models;
 using Microsoft.AspNetCore.Mvc;
 
-namespace AzureSqlVersioningDemo.V20260201.Controllers;
+namespace AzureSqlApiFirstDemo.V20260201.Controllers;
 
 /// <summary>
 /// Database controller for API version 2026-02-01.
 /// Implements operations impacted by the new ElasticPoolId property: Create, Get, Update, and List.
 /// Delete falls back to V20251101.
 /// </summary>
-[ApiController]
 [ApiVersion("2026-02-01")]
-[Route("subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/databases")]
-public class DatabasesController : ControllerBase
+public class DatabasesController : DatabasesControllerBase
 {
     private readonly ILogger<DatabasesController> _logger;
     private readonly DatabaseStore _store;
@@ -24,24 +23,22 @@ public class DatabasesController : ControllerBase
         _store = store;
     }
 
-    [HttpGet("{databaseName}")]
-    public ActionResult<DatabaseResource> Get(
-        string subscriptionId, string resourceGroupName, string databaseName)
+    public override Task<IActionResult> Get(
+        string subscriptionId, string resourceGroupName, string databaseName, CancellationToken cancellationToken)
     {
         _logger.LogInformation("GET Database - served by V20260201 controller");
 
         var key = DatabaseStore.BuildKey(subscriptionId, resourceGroupName, databaseName);
         var entity = _store.Get(key);
         if (entity == null)
-            return NotFound(new { error = new { code = "ResourceNotFound", message = $"Database '{databaseName}' not found." } });
+            return Task.FromResult<IActionResult>(NotFound(new { error = new { code = "ResourceNotFound", message = $"Database '{databaseName}' not found." } }));
 
-        return Ok(ToResource(entity));
+        return Task.FromResult<IActionResult>(Ok(ToResource(entity)));
     }
 
-    [HttpPut("{databaseName}")]
-    public ActionResult<DatabaseResource> CreateOrUpdate(
+    public override Task<IActionResult> CreateOrUpdate(
         string subscriptionId, string resourceGroupName, string databaseName,
-        [FromBody] DatabaseResource request)
+        Database body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("PUT Database - served by V20260201 controller");
 
@@ -52,11 +49,11 @@ public class DatabasesController : ControllerBase
         {
             Id = DatabaseStore.BuildResourceId(subscriptionId, resourceGroupName, databaseName),
             Name = databaseName,
-            Location = request.Location ?? "eastus",
-            Tags = request.Tags,
-            Collation = request.Properties?.Collation,
-            MaxSizeBytes = request.Properties?.MaxSizeBytes,
-            ElasticPoolId = request.Properties?.ElasticPoolId,
+            Location = body.Location,
+            Tags = body.Tags?.ToDictionary(kv => kv.Key, kv => kv.Value),
+            Collation = body.Properties?.Collation,
+            MaxSizeBytes = body.Properties?.MaxSizeBytes,
+            ElasticPoolId = body.Properties?.ElasticPoolId,
             Status = isNew ? "Creating" : "Online",
             CreationDate = isNew ? DateTimeOffset.UtcNow : null,
         });
@@ -64,13 +61,12 @@ public class DatabasesController : ControllerBase
         if (isNew)
             entity.Status = "Online";
 
-        return isNew ? StatusCode(201, ToResource(entity)) : Ok(ToResource(entity));
+        return Task.FromResult<IActionResult>(isNew ? StatusCode(201, ToResource(entity)) : Ok(ToResource(entity)));
     }
 
-    [HttpPatch("{databaseName}")]
-    public ActionResult<DatabaseResource> Update(
+    public override Task<IActionResult> Update(
         string subscriptionId, string resourceGroupName, string databaseName,
-        [FromBody] DatabaseUpdate request)
+        ResourceUpdateModel body, CancellationToken cancellationToken)
     {
         _logger.LogInformation("PATCH Database - served by V20260201 controller");
 
@@ -79,24 +75,34 @@ public class DatabasesController : ControllerBase
         {
             Id = DatabaseStore.BuildResourceId(subscriptionId, resourceGroupName, databaseName),
             Name = databaseName,
-            Tags = request.Tags,
-            Collation = request.Properties?.Collation,
-            MaxSizeBytes = request.Properties?.MaxSizeBytes,
-            ElasticPoolId = request.Properties?.ElasticPoolId,
+            Tags = body.Tags?.ToDictionary(kv => kv.Key, kv => kv.Value),
+            Collation = body.Properties?.Collation,
+            MaxSizeBytes = body.Properties?.MaxSizeBytes,
+            ElasticPoolId = body.Properties?.ElasticPoolId,
         });
 
         if (entity == null)
-            return NotFound(new { error = new { code = "ResourceNotFound", message = $"Database '{databaseName}' not found." } });
+            return Task.FromResult<IActionResult>(NotFound(new { error = new { code = "ResourceNotFound", message = $"Database '{databaseName}' not found." } }));
 
-        return Ok(ToResource(entity));
+        return Task.FromResult<IActionResult>(Ok(ToResource(entity)));
     }
 
-    private static DatabaseResource ToResource(DatabaseEntity entity) => new()
+    public override Task<IActionResult> ListByResourceGroup(
+        string subscriptionId, string resourceGroupName, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("LIST Databases - served by V20260201 controller");
+
+        var entities = _store.List(subscriptionId, resourceGroupName);
+        var resources = entities.Select(ToResource).ToList();
+        return Task.FromResult<IActionResult>(Ok(resources));
+    }
+
+    private static Database ToResource(DatabaseEntity entity) => new()
     {
         Id = entity.Id,
         Name = entity.Name,
         Type = entity.Type,
-        Location = entity.Location,
+        Location = entity.Location ?? "eastus",
         Tags = entity.Tags,
         Properties = new DatabaseProperties
         {
@@ -107,17 +113,6 @@ public class DatabasesController : ControllerBase
             ElasticPoolId = entity.ElasticPoolId,
         }
     };
-
-    [HttpGet]
-    public ActionResult<IEnumerable<DatabaseResource>> List(
-        string subscriptionId, string resourceGroupName)
-    {
-        _logger.LogInformation("LIST Databases - served by V20260201 controller");
-
-        var entities = _store.List(subscriptionId, resourceGroupName);
-        var resources = entities.Select(ToResource).ToList();
-        return Ok(resources);
-    }
 
     // Delete (DELETE) falls back to V20251101.
 }
