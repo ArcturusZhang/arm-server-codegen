@@ -75,10 +75,18 @@ dotnet run -- http://localhost:5189
 ── Step 1: Create two databases via V1 (2025-11-01) ──
 
   Created mydb:
-  { "name": "mydb", "location": "eastus", "properties": { "collation": "SQL_Latin1_General_CP1_CI_AS", ... } }
+  {
+    "name": "mydb",
+    "location": "eastus",
+    "properties": { "collation": "SQL_Latin1_General_CP1_CI_AS", ... }
+  }
 
   Created testdb:
-  { "name": "testdb", "location": "westus", ... }
+  {
+    "name": "testdb",
+    "location": "westus",
+    ...
+  }
 
 ── Step 5: List databases via V2 ──
 
@@ -89,12 +97,18 @@ dotnet run -- http://localhost:5189
 ── Step 6: Patch mydb via V3 (set ElasticPoolId) ──
 
   PATCH mydb (V3):
-  { ..., "properties": { ..., "elasticPoolId": "/.../elasticPools/pool1" } }
+  {
+    ...,
+    "properties": { ..., "elasticPoolId": "/.../elasticPools/pool1" }
+  }
 
 ── Step 7: Get mydb via V1 after V3 patch (no ElasticPoolId) ──
 
   GET mydb (V1 after V3 patch):
-  { ..., "properties": { "collation": "...", "status": "Online" } }
+  {
+    ...,
+    "properties": { "collation": "...", "status": "Online" }
+  }
   // Note: no elasticPoolId — V1 model doesn't include it
 
 ── Step 9: Get deleted testdb — expect 404 ──

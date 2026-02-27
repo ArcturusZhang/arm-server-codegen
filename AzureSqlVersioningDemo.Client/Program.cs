@@ -168,8 +168,10 @@ async Task DeleteAsync(string name, string version)
 
 void Print(string label, DatabaseResource? r)
 {
+    var json = JsonSerializer.Serialize(r, jsonOpts);
+    var indented = json.Replace("\n", "\n  ");
     Console.WriteLine($"  {label}:");
-    Console.WriteLine($"  {JsonSerializer.Serialize(r, jsonOpts)}");
+    Console.WriteLine($"  {indented}");
     Console.WriteLine();
 }
 
