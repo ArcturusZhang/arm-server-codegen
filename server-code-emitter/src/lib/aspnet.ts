@@ -14,6 +14,10 @@ export const Mvc = createLibrary("Microsoft.AspNetCore.Mvc", {
     kind: "interface",
     members: {},
   },
+  ActionResult: {
+    kind: "class",
+    members: {},
+  },
   ApiControllerAttribute: {
     kind: "class",
     members: {

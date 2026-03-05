@@ -13,7 +13,7 @@ namespace Generated.V20251101.Controllers {
         [Route(
             "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/databases/{databaseName}")]
         [HttpGet]
-        public abstract async Task<IActionResult> Get(
+        public abstract Task<ActionResult<Database>> Get(
             string subscriptionId,
             string resourceGroupName,
             string databaseName,
@@ -23,7 +23,7 @@ namespace Generated.V20251101.Controllers {
         [Route(
             "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/databases/{databaseName}")]
         [HttpPut]
-        public abstract async Task<IActionResult> CreateOrUpdate(
+        public abstract Task<ActionResult<Database>> CreateOrUpdate(
             string subscriptionId,
             string resourceGroupName,
             string databaseName,
@@ -35,7 +35,7 @@ namespace Generated.V20251101.Controllers {
         [Route(
             "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/databases/{databaseName}")]
         [HttpDelete]
-        public abstract async Task<IActionResult> Delete(
+        public abstract Task<IActionResult> Delete(
             string subscriptionId,
             string resourceGroupName,
             string databaseName,

@@ -23,17 +23,17 @@ public class DatabasesController : DatabasesControllerBase
         _store = store;
     }
 
-    public override Task<IActionResult> ListByResourceGroup(
+    public override Task<ActionResult<IEnumerable<Database>>> ListByResourceGroup(
         string subscriptionId, string resourceGroupName, CancellationToken cancellationToken)
     {
         _logger.LogInformation("LIST Databases - served by V20251201 controller");
 
         var entities = _store.List(subscriptionId, resourceGroupName);
         var resources = entities.Select(ToResource).ToList();
-        return Task.FromResult<IActionResult>(Ok(resources));
+        return Task.FromResult<ActionResult<IEnumerable<Database>>>(Ok(resources));
     }
 
-    public override Task<IActionResult> Update(
+    public override Task<ActionResult<Database>> Update(
         string subscriptionId, string resourceGroupName, string databaseName,
         ResourceUpdateModel body, CancellationToken cancellationToken)
     {
@@ -50,9 +50,9 @@ public class DatabasesController : DatabasesControllerBase
         });
 
         if (entity == null)
-            return Task.FromResult<IActionResult>(NotFound(new { error = new { code = "ResourceNotFound", message = $"Database '{databaseName}' not found." } }));
+            return Task.FromResult<ActionResult<Database>>(NotFound(new { error = new { code = "ResourceNotFound", message = $"Database '{databaseName}' not found." } }));
 
-        return Task.FromResult<IActionResult>(Ok(ToResource(entity)));
+        return Task.FromResult<ActionResult<Database>>(Ok(ToResource(entity)));
     }
 
     private static Database ToResource(DatabaseEntity entity) => new()
