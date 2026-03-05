@@ -13,7 +13,7 @@ namespace Generated.V20251101.Controllers {
         [Route(
             "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/databases/{databaseName}")]
         [HttpGet]
-        public abstract Task<IActionResult> Get(
+        public abstract Task<ActionResult<Database>> Get(
             string subscriptionId,
             string resourceGroupName,
             string databaseName,
@@ -23,7 +23,7 @@ namespace Generated.V20251101.Controllers {
         [Route(
             "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/databases/{databaseName}")]
         [HttpPut]
-        public abstract Task<IActionResult> CreateOrUpdate(
+        public abstract Task<ActionResult<Database>> CreateOrUpdate(
             string subscriptionId,
             string resourceGroupName,
             string databaseName,

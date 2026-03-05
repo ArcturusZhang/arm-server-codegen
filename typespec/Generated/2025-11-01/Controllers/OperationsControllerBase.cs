@@ -11,6 +11,6 @@ namespace Generated.V20251101.Controllers {
     {
         [Route("/providers/Microsoft.Sql/operations")]
         [HttpGet]
-        public abstract async Task<IActionResult> List(CancellationToken cancellationToken);
+        public abstract Task<IActionResult> List(CancellationToken cancellationToken);
     }
 }

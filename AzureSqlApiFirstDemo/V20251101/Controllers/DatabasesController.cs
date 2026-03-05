@@ -22,7 +22,7 @@ public class DatabasesController : DatabasesControllerBase
         _store = store;
     }
 
-    public override Task<IActionResult> Get(
+    public override Task<ActionResult<Database>> Get(
         string subscriptionId, string resourceGroupName, string databaseName, CancellationToken cancellationToken)
     {
         _logger.LogInformation("GET Database - served by V20251101 controller");
@@ -30,12 +30,12 @@ public class DatabasesController : DatabasesControllerBase
         var key = DatabaseStore.BuildKey(subscriptionId, resourceGroupName, databaseName);
         var entity = _store.Get(key);
         if (entity == null)
-            return Task.FromResult<IActionResult>(NotFound(new { error = new { code = "ResourceNotFound", message = $"Database '{databaseName}' not found." } }));
+            return Task.FromResult<ActionResult<Database>>(NotFound(new { error = new { code = "ResourceNotFound", message = $"Database '{databaseName}' not found." } }));
 
-        return Task.FromResult<IActionResult>(Ok(ToResource(entity)));
+        return Task.FromResult<ActionResult<Database>>(Ok(ToResource(entity)));
     }
 
-    public override Task<IActionResult> CreateOrUpdate(
+    public override Task<ActionResult<Database>> CreateOrUpdate(
         string subscriptionId, string resourceGroupName, string databaseName,
         Database body, CancellationToken cancellationToken)
     {
@@ -59,7 +59,7 @@ public class DatabasesController : DatabasesControllerBase
         if (isNew)
             entity.Status = "Online";
 
-        return Task.FromResult<IActionResult>(isNew ? StatusCode(201, ToResource(entity)) : Ok(ToResource(entity)));
+        return Task.FromResult<ActionResult<Database>>(isNew ? StatusCode(201, ToResource(entity)) : Ok(ToResource(entity)));
     }
 
     public override Task<IActionResult> Delete(

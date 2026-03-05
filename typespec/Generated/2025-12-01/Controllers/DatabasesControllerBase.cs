@@ -1,6 +1,7 @@
 using Asp.Versioning;
 using Generated.V20251201.Models;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -13,18 +14,18 @@ namespace Generated.V20251201.Controllers {
         [Route(
             "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/databases/{databaseName}")]
         [HttpPatch]
-        public abstract async Task<IActionResult> Update(
+        public abstract Task<ActionResult<Database>> Update(
             string subscriptionId,
             string resourceGroupName,
             string databaseName,
             [FromBody]
-            Database body,
+            ResourceUpdateModel body,
             CancellationToken cancellationToken
         );
 
         [Route("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Sql/databases")]
         [HttpGet]
-        public abstract async Task<IActionResult> ListByResourceGroup(
+        public abstract Task<ActionResult<IEnumerable<Database>>> ListByResourceGroup(
             string subscriptionId,
             string resourceGroupName,
             CancellationToken cancellationToken
